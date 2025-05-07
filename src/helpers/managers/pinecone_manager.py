@@ -2,7 +2,6 @@ import os
 from pinecone import Pinecone
 from dotenv import load_dotenv
 from typing import List, Dict, Any
-import json
 
 load_dotenv()
 
@@ -63,14 +62,15 @@ class PineconeManager:
         if not self.index:
             raise ValueError("Index not initialized")
         
-        return self.index.search(
+        response = self.index.search(
             namespace=namespace, 
             query={
                 "inputs": {"text": query}, 
                 "top_k": 3
             },
-            fields=["category", "chunk_text"]
         )
+
+        return response.result.hits
     
     def upsert_records(self, namespace: str, data: List[Dict[str, Any]]) -> bool:
         """
@@ -104,7 +104,3 @@ class PineconeManager:
         """
         self.index.delete(delete_all=True, namespace=namespace)
         return True
-
-if __name__ == "__main__":
-    pinecone_manager = PineconeManager()
-    pinecone_manager.delete_records("library")
