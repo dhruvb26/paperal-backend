@@ -1,4 +1,3 @@
-import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,4 +30,5 @@ app.include_router(topic_router, tags=["topics"])
 app.include_router(search_router, tags=["search"])
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
