@@ -10,10 +10,9 @@ from chunkr_ai.models import (
 from dotenv import load_dotenv
 import os
 import asyncio
-from helpers.store_pinecone import PineconeManager
-from helpers.db import SupabaseManager
-from models.library import LibraryRecord
-import json
+from utils import has_date_in_content
+import logging
+
 load_dotenv()
 
 async def process_urls(urls: list[str]):
@@ -22,14 +21,15 @@ async def process_urls(urls: list[str]):
     
     Args:
         urls: List of URLs to process
+    Returns:
+        List of processed data for each URL
     """
     try:
         chunkr = Chunkr(api_key=os.getenv("CHUNKR_API_KEY"))
-        pinecone_manager = PineconeManager()
-        supabase_manager = SupabaseManager()
         
         chunk_config = Configuration(
-           chunk_processing=ChunkProcessing(
+            chunk_processing=ChunkProcessing(
+                ignore_headers_and_footers=False,
                 tokenizer=Tokenizer.CL100K_BASE
             ),
             segment_processing=SegmentProcessing(
@@ -48,33 +48,36 @@ async def process_urls(urls: list[str]):
 
         tasks = []
         for url in urls:
-            task = asyncio.create_task(process_single_url(chunkr, url, chunk_config, pinecone_manager, supabase_manager))
+            task = asyncio.create_task(process_single_url(chunkr, url, chunk_config))
             tasks.append(task)
         
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+        return [r for r in results if r is not None]
 
     except Exception as e:
-        print(f"Error processing URLs: {str(e)}")
+        logging.error(f"Error processing URLs: {str(e)}")
+        return []
     finally:
         await chunkr.close()
 
-async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, pinecone_manager: PineconeManager, supabase_manager: SupabaseManager):
+async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
     """
-    Process a single URL with error handling
+    Process a single URL and return the processed data
     
     Args:
         chunkr: Chunkr instance
         url: URL to process
         config: Chunk configuration
+    Returns:
+        Dictionary containing processed chunks and metadata
     """
     try:
         task = await chunkr.upload(url, config)
         
-        # Wait for task completion and get output
         if task.output and task.output.chunks:
             chunks = task.output.chunks
             
-            data = [
+            vector_data = [
                 {
                     "_id": chunk.chunk_id,
                     "text": chunk.embed,
@@ -83,51 +86,29 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, pi
                 for chunk in chunks
             ]
 
-            print(len(data))
-            print(data[0])
-
-            pinecone_manager.upsert_records(namespace="library", data=data)
-
-            for chunk in chunks:
-                if hasattr(chunk, 'segments'):
-                    for segment in chunk.segments:
-                        if segment.segment_type == "Title":
-                            title = segment.content
-                            break
-                    if title != url:  
+            title = ""
+            info = ""
+            
+            for chunk in chunks[:3]:
+                for segment in chunk.segments:
+                    info += segment.content
+                    if segment.segment_type == "Title":
+                        title = segment.content
+            
+            for chunk in chunks[:15]:
+                for segment in chunk.segments:
+                    if segment.segment_type == "PageFooter" and has_date_in_content(segment.content):
+                        info += segment.content
                         break
 
-            metadata = {
-                "file_url": url,
-                "year": 2024,
-                "authors": ["John Doe", "Jane Smith"],
-                "citations": {
-                    "in_text": "example citation",
-                }
+            return {
+                "url": url,
+                "title": title,
+                "info": info,
+                "vector_data": vector_data,
+                "chunks": chunks
             }
-    
-            supabase_manager.add_to_library(LibraryRecord(
-                title=title,  
-                description=url,
-                metadata=metadata,
-            ))
-
-            return data
+            
     except Exception as e:
-        print(f"Error processing URL {url}: {str(e)}")
+        logging.error(f"Error processing URL {url}: {str(e)}")
         return None
-
-if __name__ == "__main__":
-    
-    # open chunks.json
-    with open("../sample/chunks.json", "r") as f:
-        raw_data = json.load(f)
-
-    chunks = raw_data["output"]["chunks"]
-
-    for chunk in chunks: 
-        segments = chunk["segments"]
-
-        for segment in segments:
-            if segment["segment_type"] == "Title":
-                print(segment["content"])

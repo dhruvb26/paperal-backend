@@ -92,24 +92,19 @@ class PineconeManager:
         self.index.upsert_records(namespace, data)
         return True
 
+    def delete_records(self, namespace: str) -> bool:
+        """
+        Delete all records from the Pinecone index.
+        
+        Args:
+            namespace (str): The namespace to delete records from
+            
+        Returns:
+            bool: True if deletion was successful
+        """
+        self.index.delete(delete_all=True, namespace=namespace)
+        return True
+
 if __name__ == "__main__":
-    
-    manager = PineconeManager()
-    
-    with open("../sample/chunks.json", "r") as f:
-        raw_data = json.load(f)
-
-    chunks = raw_data["output"]["chunks"]
-    
-    data = [
-        {
-            "_id": chunk["chunk_id"],
-            "text": chunk["embed"],
-            "category": str(chunk["chunk_length"])
-        }
-        for chunk in chunks
-    ]
-
-    print(len(data))
-
-    # manager.upsert_records(namespace="library", data=data)
+    pinecone_manager = PineconeManager()
+    pinecone_manager.delete_records("library")

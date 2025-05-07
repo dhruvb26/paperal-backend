@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from typing import List
 import time
 from urllib.parse import quote_plus
+import logging
 
 def query_scholar(query: str | List[str], max_results: int = 10) -> List[str]:
     """
@@ -49,7 +50,7 @@ def query_scholar(query: str | List[str], max_results: int = 10) -> List[str]:
                     return all_urls[:max_results]
                     
         except requests.RequestException as e:
-            print(f"Error fetching results from Google Scholar: {e}")
+            logging.error(f"Error fetching results from Google Scholar: {e}")
             break
             
     return all_urls

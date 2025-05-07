@@ -1,16 +1,10 @@
 import logging
 import os
-from typing import List, Optional, Dict, Any
-from openai import OpenAI
+from typing import List, Optional, Dict
 from supabase.client import create_client
 from dotenv import load_dotenv
-from models.library import LibraryRecord
 
 load_dotenv()
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", force=True
-)
 
 class SupabaseManager:
     """
@@ -18,12 +12,11 @@ class SupabaseManager:
     
     Attributes:
         client (Client): The Supabase client instance
-        openai_client (OpenAI): The OpenAI client instance
     """
     
     def __init__(self):
         """
-        Initialize the SupabaseManager with Supabase and OpenAI clients.
+        Initialize the SupabaseManager with Supabase client.
         """
         try:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -31,13 +24,6 @@ class SupabaseManager:
             self.client = create_client(supabase_url, supabase_key)
         except Exception as e:
             logging.error(f"Error creating Supabase client: {e}")
-            raise
-
-        try:
-            openai_api_key = os.getenv("OPENAI_API_KEY")
-            self.openai_client = OpenAI(api_key=openai_api_key)
-        except Exception as e:
-            logging.error(f"Error creating OpenAI client: {e}")
             raise
 
     def query_metadata(self, metadata_filters: Dict[str, str], user_id: Optional[str] = None):
@@ -51,32 +37,37 @@ class SupabaseManager:
             
         Returns:
             Response from Supabase query containing matching records
+            
+        Raises:
+            Exception: If there's an error executing the query
         """
-        query = self.client.from_("library").select("*")
-    
-        for field, value in metadata_filters.items():
-            field = f"metadata->>{field}"
-            query = query.eq(field, value)
+        try:
+            query = self.client.from_("library").select("*")
         
-        if user_id:
-            query = query.eq("user_id", user_id)
-        else:
-            query = query.is_("user_id", None)
-        
-        return query.execute()
+            for field, value in metadata_filters.items():
+                field = f"metadata->>{field}"
+                query = query.eq(field, value)
+            
+            if user_id:
+                query = query.eq("user_id", user_id)
+            else:
+                query = query.is_("user_id", None)
+            
+            result = query.execute()
+            return result
+        except Exception as e:
+            logging.error(f"Error querying library with filters {metadata_filters}: {e}")
+            raise
 
-    def add_to_library(self, records: List[LibraryRecord]) -> None:
+    def add_to_library(self, records: List[Dict]) -> None:
         """
         Add multiple records to the library table.
         
         Args:
-            records (List[LibraryRecord]): List of LibraryRecord objects to insert
+            records (List[Dict]): List of dictionaries containing record data to insert
         """
         try:
-            records_data = [record.model_dump() for record in records]
-            self.client.table("library").insert(records_data).execute()
-            logging.info(f"Successfully added {len(records)} records to library")
+            self.client.table("library").insert(records).execute()
         except Exception as e:
             logging.error(f"Error adding records to library: {e}")
             raise
-

@@ -1,69 +1,67 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from models import SearchRequest, SearchResponse, APIResponse
-from my_crew.flows.find_papers import FindPapersFlow
+from models import QueryRequest, TopicMetadata, APIResponse
+from helpers import extract_research_topic
 from http import HTTPStatus
 import logging
 
 router = APIRouter()
 
-@router.post("/search-papers", response_model=APIResponse[SearchResponse])
-async def search_papers(request: SearchRequest):
+@router.post("/extract-topic", response_model=APIResponse[TopicMetadata])
+async def extract_topic(request: QueryRequest):
     """
-    Search for papers based on a research topic
-    
+    Extract research topic information from a user query
+
     Args:
-        Object containing a key-value pair of "topic"
+        Object containing a key-value pair of "query"
 
     Returns: 
         A success boolean, data field if successful, and an error message if not.
     """
     try:
-        if not request.topic.strip():
+        if not request.query.strip():
             response = APIResponse(
                 success=False,
-                error="Topic cannot be empty"
+                error="Query cannot be empty"
             )
             return JSONResponse(
                 status_code=HTTPStatus.BAD_REQUEST,
                 content=response.model_dump()
             )
 
-        flow = FindPapersFlow()
-        try:
-            result = await flow.kickoff_async(inputs={"topic": request.topic})
-        except Exception as e:
-            logging.error(f"Error in paper search flow: {str(e)}")
+        topic_data = await extract_research_topic(request.query)
+        
+        if not topic_data or not all(topic_data.get(key) for key in ["main_topic", "sub_topics", "research_question"]):
             response = APIResponse(
                 success=False,
-                error="Failed to execute paper search flow"
+                error="Failed to extract valid topic information from the query"
             )
             return JSONResponse(
                 status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 content=response.model_dump()
             )
 
-        if not result:
-            response = APIResponse(
-                success=False,
-                error="No papers found for the given topic"
-            )
-            return JSONResponse(
-                status_code=HTTPStatus.NOT_FOUND,
-                content=response.model_dump()
-            )
-
         response = APIResponse(
             success=True,
-            data={"urls": result}
+            data=topic_data
         )
         return JSONResponse(
             status_code=HTTPStatus.OK,
             content=response.model_dump()
         )
 
+    except ValueError as e:
+        logging.error(f"Validation error in extract_topic: {str(e)}")
+        response = APIResponse(
+            success=False,
+            error=str(e)
+        )
+        return JSONResponse(
+            status_code=HTTPStatus.BAD_REQUEST,
+            content=response.model_dump()
+        )
     except Exception as e:
-        logging.error(f"Error in search_papers: {str(e)}")
+        logging.error(f"Error in extract_topic: {str(e)}")
         response = APIResponse(
             success=False,
             error="An internal server error occurred"
@@ -71,4 +69,4 @@ async def search_papers(request: SearchRequest):
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content=response.model_dump()
-        )
+        ) 

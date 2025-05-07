@@ -1,20 +1,15 @@
-import logging
-
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api.routes.topic import router as topic_router
+from api.routes.search import router as search_router
 
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
 app = FastAPI(
-    title="Autocomplete API",
-    description="This is the Autocomplete API",
+    title="Paperal",
+    description="This is the FastAPI backend for Paperal",
 )
 
 app.add_middleware(
@@ -27,8 +22,13 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {
+        "message": "Welcome to Paperal",
+    }
 
+
+app.include_router(topic_router, tags=["topics"])
+app.include_router(search_router, tags=["search"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000)

@@ -1,7 +1,7 @@
 from crewai.tools import BaseTool
 from typing import Type
 from pydantic import BaseModel, Field
-from utils.ocr import get_pdf_text
+from helpers import get_pdf_text
 
 class OCRToolInput(BaseModel):
     """Input schema for OCRTool."""

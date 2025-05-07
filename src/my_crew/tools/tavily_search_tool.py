@@ -1,7 +1,7 @@
 from crewai.tools import BaseTool
 from typing import Type
 from pydantic import BaseModel, Field
-from utils.tavily_search import query_tavily
+from helpers import query_tavily
 
 class WebSearchToolInput(BaseModel):
     """Input schema for WebSearchTool."""
