@@ -34,8 +34,6 @@ google-auth-httplib2==0.2.0
 google-generativeai==0.8.5
 googleapis-common-protos==1.70.0
 gotrue==2.11.4
-graphviz==0.20.3
-greenlet==3.2.1
 grpcio==1.71.0
 grpcio-status==1.71.0
 h11==0.16.0
@@ -47,7 +45,6 @@ httpx==0.28.1
 httpx-sse==0.4.0
 hyperframe==6.1.0
 idna==3.10
-iniconfig==2.1.0
 ipython==9.2.0
 ipython-pygments-lexers==1.1.1
 jedi==0.19.2
@@ -82,8 +79,6 @@ pexpect==4.9.0
 pillow==11.2.1
 pinecone==6.0.2
 pinecone-plugin-interface==0.0.7
-playwright==1.52.0
-pluggy==1.5.0
 postgrest==1.0.1
 prompt-toolkit==3.0.51
 propcache==0.3.1
@@ -97,12 +92,9 @@ pyasn1-modules==0.4.2
 pydantic==2.11.4
 pydantic-core==2.33.2
 pydantic-settings==2.9.1
-pyee==13.0.0
 pygments==2.19.1
 pyjwt==2.9.0
 pyparsing==3.2.3
-pytest==8.3.5
-pytest-mock==3.14.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pyyaml==6.0.2
