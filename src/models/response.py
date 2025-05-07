@@ -20,6 +20,10 @@ class DocumentMetadata(TypedDict):
 class SearchResponse(TypedDict):
     urls: List[str]
 
+class ProcessResponse(TypedDict):
+    success: bool
+    error: Optional[str] = None
+
 T = TypeVar('T')
 
 class APIResponse(BaseModel, Generic[T]):

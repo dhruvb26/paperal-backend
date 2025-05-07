@@ -7,7 +7,6 @@ class SentenceRequest(BaseModel):
     subheading: Optional[str] = None
     user_id: Optional[str] = None
 
-
 class StoreResearchRequest(BaseModel):
     research_urls: list[str]
     user_id: Optional[str] = None
@@ -18,3 +17,6 @@ class QueryRequest(BaseModel):
 
 class SearchRequest(BaseModel):
     topic: str
+
+class ProcessRequest(BaseModel):
+    urls: list[str]
