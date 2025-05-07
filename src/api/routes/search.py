@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from models import SearchRequest, SearchResponse, APIResponse
-from my_crew.flows.find_papers import FindPapersFlow
+from helpers import query_sonar, query_tavily, query_scholar
 from http import HTTPStatus
 import logging
 
@@ -29,9 +29,24 @@ async def search_papers(request: SearchRequest):
                 content=response.model_dump()
             )
 
-        flow = FindPapersFlow()
         try:
-            result = await flow.kickoff_async(inputs={"topic": request.topic})
+            
+            sonar_query = f"""
+                Find academic papers about {request.topic}. 
+                
+                Format the response as a structured list of papers.
+                """
+                
+            tavily_query = f"academic research papers on {request.topic} filetype:pdf"
+
+            scholar_query = f"{request.topic}"
+            
+            sonar_results = query_sonar(sonar_query)
+            tavily_results = query_tavily(tavily_query)
+            scholar_results = query_scholar(scholar_query)
+
+            result = sonar_results["urls"] + tavily_results + scholar_results
+
         except Exception as e:
             logging.error(f"Error in paper search flow: {str(e)}")
             response = APIResponse(

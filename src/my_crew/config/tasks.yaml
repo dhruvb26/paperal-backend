@@ -1,7 +1,0 @@
-web_search_task:
-  description: >
-    Write a query to search the web for relevant peer-review papers about {topic}. I only want to find pdfs. Try to also find papers 
-    related to {topic} that might be helpful in writing a research paper.
-  expected_output: >
-    A list of pdf urls from the web.
-  agent: research_assistant
