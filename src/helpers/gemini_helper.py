@@ -4,11 +4,10 @@ from dotenv import load_dotenv
 from utils import parse_json_safely
 import logging
 from models import TopicMetadata, DocumentMetadata
-
 load_dotenv()
 
 GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_MODEL = "gemini-1.5-flash-002"
+DEFAULT_MODEL = "gemini-2.0-flash"
 
 def read_prompt(prompt_file: str, **kwargs) -> str:
     """

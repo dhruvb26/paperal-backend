@@ -13,13 +13,15 @@ def process_urls_task(self, urls: list[str]):
         urls: List of URLs to process
     """
     try:
+        logger = logging.getLogger(__name__)
+        logger.info("Starting Celery task process_urls_task")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         result = loop.run_until_complete(process_urls(urls))
         
         if not result:
-            logging.error("Failed to process URLs in Celery task")
+            logger.info("Failed to process URLs in Celery task")
             return None
 
         pinecone_manager = PineconeManager()
@@ -27,26 +29,32 @@ def process_urls_task(self, urls: list[str]):
 
         for item in result:
             if item and "vector_data" in item:
-                pinecone_manager.upsert_records("library", item["vector_data"])
+                try:
+                    pinecone_manager.upsert_records("library", item["vector_data"])
+                except Exception as e:
+                    logger.info(f"Error upserting records to Pinecone: {str(e)}")
             
             if item:
-                metadata = loop.run_until_complete(extract_metadata(item["info"]))
-                lib_record = {
-                    "title": item["title"],
-                    "description": metadata["description"],
-                    "metadata": {
+                try:
+                    metadata = loop.run_until_complete(extract_metadata(item["info"]))
+                    lib_record = {
+                        "title": item["title"],
+                        "description": metadata["description"],
+                        "metadata": {
                         "file_url": item["url"],
                         "authors": metadata["authors"],
                         "year": metadata["year"],
                         "citations": metadata["citations"]
                     }
-                }
-                supabase_manager.add_to_library([lib_record])
+                    }
+                    supabase_manager.add_to_library([lib_record])
+                except Exception as e:
+                    logger.info(f"Error adding to library: {str(e)}")
         
         return {"status": "success", "processed_urls": len(urls)}
 
     except Exception as e:
-        logging.error(f"Error in Celery task process_urls_task: {str(e)}")
+        logger.info(f"Error in Celery task process_urls_task: {str(e)}")
         self.update_state(state='FAILURE', meta={'error': str(e)})
         raise
     finally:

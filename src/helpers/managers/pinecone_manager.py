@@ -89,7 +89,11 @@ class PineconeManager:
         if not self.index:
             raise ValueError("Index not initialized")
         
-        self.index.upsert_records(namespace, data)
+        batch_size = 96
+        for i in range(0, len(data), batch_size):
+            batch = data[i:i + batch_size]
+            self.index.upsert_records(namespace, batch)
+        
         return True
 
     def delete_records(self, namespace: str) -> bool:
