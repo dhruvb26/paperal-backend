@@ -1,12 +1,14 @@
-import google.generativeai as genai
+import requests
 import os
-import asyncio
 from dotenv import load_dotenv
 from utils import parse_json_safely
 import logging
 from models import TopicMetadata, DocumentMetadata
 
 load_dotenv()
+
+GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
+DEFAULT_MODEL = "gemini-1.5-flash-002"
 
 def read_prompt(prompt_file: str, **kwargs) -> str:
     """
@@ -33,9 +35,9 @@ def read_prompt(prompt_file: str, **kwargs) -> str:
         logging.error(f"Error reading prompt: {str(e)}")
         return ""
 
-async def make_gemini_call(prompt: str, model_name: str = 'gemini-1.5-flash-002') -> str:
+async def make_gemini_call(prompt: str, model_name: str = DEFAULT_MODEL) -> str:
     """
-    Make a generic call to Gemini API
+    Make a direct REST API call to Gemini
     
     Args:
         prompt: The prompt to send to Gemini
@@ -44,11 +46,35 @@ async def make_gemini_call(prompt: str, model_name: str = 'gemini-1.5-flash-002'
     Returns:
         Response text from Gemini
     """
-    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    model = genai.GenerativeModel(model_name)
-    response = await model.generate_content_async(prompt)
+    api_key = os.getenv("GOOGLE_API_KEY")
+    url = f"{GEMINI_API_ENDPOINT}/{model_name}:generateContent?key={api_key}"
     
-    return response.text.strip()
+    payload = {
+        "contents": [{
+            "parts": [{
+                "text": prompt
+            }]
+        }]
+    }
+    
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        response_json = response.json()
+        if "candidates" in response_json and len(response_json["candidates"]) > 0:
+            return response_json["candidates"][0]["content"]["parts"][0]["text"].strip()
+        else:
+            raise ValueError("No valid response from Gemini API")
+            
+    except Exception as e:
+        logging.error(f"Error calling Gemini API: {str(e)}")
+        return ""
+
 async def extract_metadata(doc_info: str) -> DocumentMetadata:
     """
     Extract structured metadata from document info using Gemini
@@ -119,11 +145,11 @@ async def extract_research_topic(user_query: str) -> TopicMetadata:
 
                 Please identify the core research topic and provide it in the following JSON format:
 
-                {
+                {{
                     "main_topic": "The primary research topic which will also be the title of the research paper",
                     "sub_topics": ["List of related sub-topics or aspects to explore"],
                     "research_question": "A well-formulated research question based on the topic"
-                }
+                }}
 
                 User Query: {user_query}
 
@@ -147,6 +173,3 @@ async def extract_research_topic(user_query: str) -> TopicMetadata:
             sub_topics=[],
             research_question=""
         )
-
-if __name__ == "__main__":
-    asyncio.run(extract_research_topic("What is the main topic of the paper?"))
