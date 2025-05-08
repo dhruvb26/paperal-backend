@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes.topic import router as topic_router
 from api.routes.search import router as search_router
 from api.routes.process import router as process_router
-
+from api.routes.generate import router as generate_router
 load_dotenv()
 
 app = FastAPI(
@@ -30,7 +30,7 @@ async def root():
 app.include_router(topic_router, tags=["topics"])
 app.include_router(search_router, tags=["search"])
 app.include_router(process_router, tags=["process"])
-
+app.include_router(generate_router, tags=["generate"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, port=8000)

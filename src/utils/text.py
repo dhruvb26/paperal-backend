@@ -1,6 +1,7 @@
 import re
 import json
-from typing import Optional, Any
+from typing import Optional, Any, Dict
+from models import CitedResponse
 
 def has_date_in_content(content: str) -> bool:
     """
@@ -36,3 +37,54 @@ def parse_json_safely(content: str) -> Optional[Any]:
         except (json.JSONDecodeError, ValueError):
             pass
     return None
+
+def serialize_hit(hit: Any) -> Dict[str, Any]:
+    """
+    Serialize a Hit object to a dictionary.
+    
+    Args:
+        hit: The hit object from vector search
+        
+    Returns:
+        Dict[str, Any]: Serialized hit as a dictionary
+    """
+    return {
+        "_id": getattr(hit, "_id", getattr(hit, "id", None)),
+        "_score": getattr(hit, "_score", getattr(hit, "score", None)),
+        "fields": getattr(hit, "fields", getattr(hit, "metadata", {}))
+    }
+
+def serialize_tool_result(tool_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Serialize a tool result containing hits to a dictionary.
+    
+    Args:
+        tool_result: The result from a tool call
+        
+    Returns:
+        Dict[str, Any]: Serialized tool result
+    """
+    serializable_results = [serialize_hit(hit) for hit in tool_result.get("results", [])]
+    return {"query": tool_result.get("query"), "results": serializable_results}
+
+def format_structured_response(text: str, citation_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Format a structured response with or without citation information.
+    
+    Args:
+        text: The text content of the response
+        citation_info: Optional citation information including file_url, citation text, and context
+        
+    Returns:
+        Dict[str, Any]: Structured response as a dictionary
+    """
+    if citation_info:
+        return CitedResponse(
+            text=text,
+            is_referenced=bool(citation_info.get("citation")),
+            href=citation_info.get("file_url"),
+            citations={"in-text": citation_info.get("citation")} if citation_info.get("citation") else None,
+            context=citation_info.get("context")
+        ).model_dump()
+    else:
+        return {"text": text, "is_referenced": False, "href": None}

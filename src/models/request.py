@@ -20,3 +20,6 @@ class SearchRequest(BaseModel):
 
 class ProcessRequest(BaseModel):
     urls: list[str]
+
+class GraphQueryRequest(BaseModel):
+    query: str

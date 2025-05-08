@@ -1,16 +1,18 @@
 import getpass
 import os
 import logging
-from typing import TypedDict, Literal
+from typing import Literal
 import json
-import asyncio
 from langgraph.graph import MessagesState, StateGraph, END
 from langchain.chat_models import init_chat_model
 from graph.vector_search import VectorSearchTool
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from pydantic import BaseModel, Field
+from utils import serialize_tool_result, format_structured_response
+from models import PaperState, GradeDocuments
 
-response_model = init_chat_model("openai:gpt-4o", temperature=0)
+response_model = init_chat_model("openai:gpt-4o", temperature=0.4)
+grader_model = init_chat_model("openai:gpt-4.1", temperature=0)
+
 vector_search_tool = VectorSearchTool()
 
 GRADE_PROMPT = (
@@ -20,24 +22,13 @@ GRADE_PROMPT = (
     "Give a binary score 'yes' or 'no' score to indicate whether the text chunks are relevant."
 )
 
-class GradeDocuments(BaseModel):
-    """Grade documents using a binary score for relevance check."""
-
-    binary_score: str = Field(
-        description="Relevance score: 'yes' if relevant, or 'no' if not relevant"
-    )
-
-grader_model = init_chat_model("openai:gpt-4.1", temperature=0)
-
 def _set_env(key: str):
     if key not in os.environ:
-        logging.info(f"Setting environment variable: {key}")
+        logging.debug(f"Setting environment variable: {key}")
         os.environ[key] = getpass.getpass(f"{key}:")
 
+_set_env("GOOGLE_API_KEY")
 _set_env("OPENAI_API_KEY")
-
-class PaperState(TypedDict):
-    paper_content: str
 
 def generate_question_for_rag(content: str) -> str:
     """
@@ -49,14 +40,12 @@ def generate_question_for_rag(content: str) -> str:
     Returns:
         str: A focused question for vector search
     """
-    logging.info("Generating RAG question for content")
     messages = [
-        SystemMessage(content="You are an academic writing assistant that generates search queries for vector search. Given the previous 2-3 sentences from a research paper draft, generate a specific question that will help find relevant chunks of text to continue the academic writing."),
+        SystemMessage(content="You are an academic writing assistant that generates search queries for vector search. Given the previous 2-3 sentences from a research paper draft, generate a specific question that will help find relevant chunks of text to continue the academic writing. Only return the question itself."),
         HumanMessage(content=content)
     ]
     
     response = response_model.invoke(messages)
-    logging.debug(f"Generated question: {response.content}")
     return response.content
 
 def evaluate_rag_necessity(content: str) -> bool:
@@ -69,7 +58,6 @@ def evaluate_rag_necessity(content: str) -> bool:
     Returns:
         bool: True if citation is needed, False otherwise
     """
-    logging.info("Evaluating RAG necessity")
     messages = [
         SystemMessage(content="""You are an academic writing assistant that determines if the next sentence needs citation.
         Analyze the previous 2-3 sentences and determine if the next sentence should include a citation to support the ongoing discussion.
@@ -81,18 +69,15 @@ def evaluate_rag_necessity(content: str) -> bool:
     
     response = response_model.invoke(messages)
     result = response.content.lower().strip() == 'true'
-    logging.info(f"RAG necessity evaluation result: {result}")
     return result
 
 def execute_tool_call(tool_call):
     """Execute a tool call and return its result."""
-    logging.info(f"Executing tool call: {tool_call['function']['name']}")
     tool_name = tool_call["function"]["name"]
     tool_args = json.loads(tool_call["function"]["arguments"])
     
     if tool_name == "vector_search":
         result = vector_search_tool._run(**tool_args)
-        logging.info(f"Tool call result: {result}")
         return result
     return None
 
@@ -106,12 +91,10 @@ def retrieve_relevant_documents(state: MessagesState):
     Returns:
         MessagesState: Updated state with retrieved documents
     """
-    logging.info("Retrieving relevant documents")
     content = state["messages"][0].content
     search_query = generate_question_for_rag(content)
     
     model = response_model.bind_tools([vector_search_tool])
-    logging.info(f"Executing search with query: {search_query}")
     initial_response = model.invoke([
         SystemMessage(content="Use the vector_search tool with the given query."),
         HumanMessage(content=f"Using the following search query: '{search_query}")
@@ -120,21 +103,16 @@ def retrieve_relevant_documents(state: MessagesState):
     retrieved_documents = []
     
     if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
-        logging.info("Processing tool calls from initial response")
-        
         for tool_call in initial_response.additional_kwargs['tool_calls']:
             tool_result = execute_tool_call(tool_call)
             if tool_result:
-                retrieved_documents.append(str(tool_result))
-                logging.info(f"Retrieved document content added to context")
+                serialized_tool_result = serialize_tool_result(tool_result)
+                retrieved_documents.append(serialized_tool_result)
         
-        # Combine all retrieved documents into consolidated context
-        retrieved_context = "\n\n--- DOCUMENT SEPARATOR ---\n\n".join(retrieved_documents)
-        logging.info(f"Consolidated {len(retrieved_documents)} documents for context")
+        retrieved_context = json.dumps(retrieved_documents)
         
         return {"messages": state["messages"] + [AIMessage(content=retrieved_context)]}
-    
-    # If no documents were retrieved, return empty context
+
     return {"messages": state["messages"] + [AIMessage(content="No relevant documents found.")]}
 
 def generate_response_with_rag(state: MessagesState):
@@ -147,12 +125,25 @@ def generate_response_with_rag(state: MessagesState):
     Returns:
         MessagesState: Updated state with the generated next sentence
     """
-    logging.info("Generating next sentence with citation")
     previous_sentences = state["messages"][0].content
     retrieved_context = state["messages"][-1].content
 
-    print(f"Previous sentences: {previous_sentences}")
-    print(f"Retrieved context: {retrieved_context}")
+    try:
+        context_data = json.loads(retrieved_context)
+        citation_info = {}
+        if isinstance(context_data, list) and context_data:
+            doc = context_data[0]
+            results = doc.get("results", [])
+            first_hit = results[0] if results else None
+            if first_hit and isinstance(first_hit, dict):
+                fields = first_hit.get("fields", {})
+                citation_info = {
+                    "file_url": fields.get("file_url"),
+                    "citation": fields.get("citation"),
+                    "context": fields.get("text")
+                }
+    except (json.JSONDecodeError, TypeError, KeyError):
+        citation_info = None
     
     messages = [
         SystemMessage(content="""You are an academic writing assistant. 
@@ -165,9 +156,10 @@ def generate_response_with_rag(state: MessagesState):
     ]
     
     response = response_model.invoke(messages)
-    logging.info("Generated next sentence with citation")
     
-    return {"messages": state["messages"] + [response]}
+    structured_response = format_structured_response(response.content, citation_info)
+    
+    return {"messages": state["messages"] + [AIMessage(content=json.dumps(structured_response))]}
 
 def generate_normal_response(state: MessagesState):
     """
@@ -179,7 +171,6 @@ def generate_normal_response(state: MessagesState):
     Returns:
         MessagesState: Updated state with the generated next sentence
     """
-    logging.info("Generating next sentence without citation")
     previous_sentences = state["messages"][0].content
     
     response = response_model.invoke([
@@ -190,25 +181,18 @@ def generate_normal_response(state: MessagesState):
         HumanMessage(content=previous_sentences)
     ])
     
-    logging.info("Next sentence generation complete")
-    return {"messages": state["messages"] + [response]}
+    structured_response = format_structured_response(response.content)
+    return {"messages": state["messages"] + [AIMessage(content=json.dumps(structured_response))]}
 
 def check_relevance(
     state: MessagesState,
 ) -> Literal["generate_with_rag", "generate_normal"]:
     """Determine whether the retrieved documents are relevant to the previous sentences written so far."""
-    logging.info("Starting document relevance check")
     previous_sentences = state["messages"][0].content
     retrieved_context = state["messages"][-1].content
     
     if retrieved_context == "No relevant documents found.":
-        logging.info("No documents found, generating normal response")
         return {"check_relevance": "generate_normal"}
-    
-    print(f"Previous sentences: {previous_sentences}")
-    print(f"Retrieved context: {retrieved_context}")
-
-    # final_context = retrieved_context["results"]
 
     prompt = GRADE_PROMPT.format(question=previous_sentences, context=retrieved_context)
     response = (
@@ -218,7 +202,6 @@ def check_relevance(
         )
     )
     score = response.binary_score
-    logging.info(f"Document relevance check result: {score}")
 
     if score == "yes":
         return {"check_relevance": "generate_with_rag"}
@@ -240,37 +223,28 @@ def generate_query_or_respond(state: PaperState):
     Returns:
         dict: A dictionary with the 'messages' key containing the response
     """
-    logging.info("Starting query/response generation")
     content = state["paper_content"]
     
     if evaluate_rag_necessity(content):
-        logging.info("RAG determined necessary, generating search query")
         search_query = generate_question_for_rag(content)
         
         model = response_model.bind_tools([vector_search_tool])
-        logging.info(f"Executing initial search with query: {search_query}")
         initial_response = model.invoke([
             SystemMessage(content="You are a helpful research assistant. Use the vector_search tool to find relevant papers and incorporate them into your response."),
             HumanMessage(content=f"Using the following search query: '{search_query}', find relevant papers to help answer: {content}")
         ])
         
-        # Collect all retrieved documents
         retrieved_documents = []
         
         if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
-            logging.info("Processing tool calls from initial response")
-            
             for tool_call in initial_response.additional_kwargs['tool_calls']:
                 tool_result = execute_tool_call(tool_call)
                 if tool_result:
-                    retrieved_documents.append(str(tool_result))
-                    logging.info(f"Retrieved document content added to context")
+                    serialized_tool_result = serialize_tool_result(tool_result)
+                    retrieved_documents.append(serialized_tool_result)
             
-            # Combine all retrieved documents into consolidated context
             retrieved_context = "\n\n--- DOCUMENT SEPARATOR ---\n\n".join(retrieved_documents)
-            logging.info(f"Consolidated {len(retrieved_documents)} documents for context")
             
-            # Create messages with explicit instructions to use retrieved content
             messages = [
                 SystemMessage(content="""You are a helpful research assistant. 
                 You MUST use the information from the retrieved documents to answer the user's question.
@@ -281,15 +255,12 @@ def generate_query_or_respond(state: PaperState):
             ]
             
             response = response_model.invoke(messages)
-            logging.info("Generated response with explicit document context")
     else:
-        logging.info("RAG not necessary, generating direct response")
         response = response_model.invoke([
             SystemMessage(content="You are a helpful research assistant. Provide a general response without specific citations."),
             HumanMessage(content=content)
         ])
     
-    logging.info("Response generation complete")
     return {"messages": [response]}
 
 async def build_rag_graph():
@@ -324,15 +295,15 @@ async def build_rag_graph():
 
     return graph
 
-if __name__ == "__main__":
-    logging.info("Starting main execution")
-    workflow = asyncio.run(build_rag_graph())
-    sample_query = "Our findings align with the hypothesis tested by Anthropic researchers, who observed that large language models exhibit a capacity for moral self-correction when given appropriate natural language prompts."
-    result = workflow.invoke({"messages": [HumanMessage(content=sample_query)]})
+async def query_graph(query: str):
+    """
+    Build the query workflow graph
     
-    # Extract the model's response from the last message
-    final_response = result["messages"][-1].content
-    print("\nModel's Response:")
-    print(final_response)
+    Returns:
+        StateGraph: The configured workflow graph
+    """
+    workflow = await build_rag_graph()
     
-    logging.info("Main execution complete")
+    result = workflow.invoke({"messages": [HumanMessage(content=query)]})
+    
+    return result["messages"][-1].content

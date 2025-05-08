@@ -108,7 +108,3 @@ class PineconeManager:
         """
         self.index.delete(delete_all=True, namespace=namespace)
         return True
-
-if __name__ == "__main__":
-    pinecone_manager = PineconeManager()
-    pinecone_manager.delete_records("library")
