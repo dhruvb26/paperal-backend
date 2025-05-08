@@ -14,11 +14,10 @@ response_model = init_chat_model("openai:gpt-4o", temperature=0)
 vector_search_tool = VectorSearchTool()
 
 GRADE_PROMPT = (
-    "You are a grader assessing relevance of a retrieved document to a user question. \n "
-    "Here is the retrieved document: \n\n {context} \n\n"
-    "Here is the user question: {question} \n"
-    "If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant. \n"
-    "Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question."
+    "You are a grader assessing relevance of a retrieved text chunks to the previous sentences written so far in a research paper draft. \n "
+    "Here are the retrieved text chunks: \n\n {context} \n\n"
+    "Here are the previous sentences: {question} \n"
+    "Give a binary score 'yes' or 'no' score to indicate whether the text chunks are relevant."
 )
 
 class GradeDocuments(BaseModel):
@@ -52,7 +51,7 @@ def generate_question_for_rag(content: str) -> str:
     """
     logging.info("Generating RAG question for content")
     messages = [
-        SystemMessage(content="You are an academic writing assistant that generates focused search queries. Given the previous 2-3 sentences from a research paper, generate a specific question that will help find relevant research papers to continue the academic writing with an appropriate next sentence."),
+        SystemMessage(content="You are an academic writing assistant that generates search queries for vector search. Given the previous 2-3 sentences from a research paper draft, generate a specific question that will help find relevant chunks of text to continue the academic writing."),
         HumanMessage(content=content)
     ]
     
@@ -114,11 +113,10 @@ def retrieve_relevant_documents(state: MessagesState):
     model = response_model.bind_tools([vector_search_tool])
     logging.info(f"Executing search with query: {search_query}")
     initial_response = model.invoke([
-        SystemMessage(content="You are an academic writing assistant. Use the vector_search tool to find relevant papers that can inform the next sentence in the research paper."),
-        HumanMessage(content=f"Using the following search query: '{search_query}', find relevant papers to help continue these sentences: {content}")
+        SystemMessage(content="Use the vector_search tool with the given query."),
+        HumanMessage(content=f"Using the following search query: '{search_query}")
     ])
     
-    # Collect all retrieved documents
     retrieved_documents = []
     
     if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
@@ -152,6 +150,9 @@ def generate_response_with_rag(state: MessagesState):
     logging.info("Generating next sentence with citation")
     previous_sentences = state["messages"][0].content
     retrieved_context = state["messages"][-1].content
+
+    print(f"Previous sentences: {previous_sentences}")
+    print(f"Retrieved context: {retrieved_context}")
     
     messages = [
         SystemMessage(content="""You are an academic writing assistant. 
@@ -195,17 +196,21 @@ def generate_normal_response(state: MessagesState):
 def check_relevance(
     state: MessagesState,
 ) -> Literal["generate_with_rag", "generate_normal"]:
-    """Determine whether the retrieved documents are relevant to the question."""
+    """Determine whether the retrieved documents are relevant to the previous sentences written so far."""
     logging.info("Starting document relevance check")
-    question = state["messages"][0].content
-    context = state["messages"][-1].content
+    previous_sentences = state["messages"][0].content
+    retrieved_context = state["messages"][-1].content
     
-    # If no documents were found, generate normal response
-    if context == "No relevant documents found.":
+    if retrieved_context == "No relevant documents found.":
         logging.info("No documents found, generating normal response")
         return {"check_relevance": "generate_normal"}
+    
+    print(f"Previous sentences: {previous_sentences}")
+    print(f"Retrieved context: {retrieved_context}")
 
-    prompt = GRADE_PROMPT.format(question=question, context=context)
+    # final_context = retrieved_context["results"]
+
+    prompt = GRADE_PROMPT.format(question=previous_sentences, context=retrieved_context)
     response = (
         grader_model
         .with_structured_output(GradeDocuments).invoke(
@@ -324,5 +329,10 @@ if __name__ == "__main__":
     workflow = asyncio.run(build_rag_graph())
     sample_query = "Our findings align with the hypothesis tested by Anthropic researchers, who observed that large language models exhibit a capacity for moral self-correction when given appropriate natural language prompts."
     result = workflow.invoke({"messages": [HumanMessage(content=sample_query)]})
-    print(json.dumps(result, default=str, indent=2))
+    
+    # Extract the model's response from the last message
+    final_response = result["messages"][-1].content
+    print("\nModel's Response:")
+    print(final_response)
+    
     logging.info("Main execution complete")
