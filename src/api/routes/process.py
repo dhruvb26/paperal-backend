@@ -8,7 +8,7 @@ from api.tasks.process_urls_task import process_urls_task
 
 router = APIRouter()
 
-@router.post("/process-urls", response_model=APIResponse[ProcessResponse])
+@router.post("/process", response_model=APIResponse[ProcessResponse])
 async def process_papers(request: ProcessRequest):
     """
     Process a research paper by chunking it into sections and storing the vector embeddings.
@@ -58,7 +58,7 @@ async def process_papers(request: ProcessRequest):
             content=response.model_dump()
         )
 
-@router.get("/task/{task_id}", response_model=APIResponse)
+@router.get("/status/{task_id}", response_model=APIResponse)
 async def get_task_status(task_id: str):
     """
     Get the status of a background processing task

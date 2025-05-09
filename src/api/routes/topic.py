@@ -7,7 +7,7 @@ import logging
 
 router = APIRouter()
 
-@router.post("/extract-topic", response_model=APIResponse[TopicMetadata])
+@router.post("/topic", response_model=APIResponse[TopicMetadata])
 async def extract_topic(request: QueryRequest):
     """
     Extract research topic information from a user query

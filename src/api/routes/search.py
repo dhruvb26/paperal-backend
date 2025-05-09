@@ -7,7 +7,7 @@ import logging
 
 router = APIRouter()
 
-@router.post("/search-papers", response_model=APIResponse[SearchResponse])
+@router.post("/search", response_model=APIResponse[SearchResponse])
 async def search_papers(request: SearchRequest):
     """
     Search for papers based on a research topic
