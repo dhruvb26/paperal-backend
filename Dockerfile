@@ -6,7 +6,6 @@ WORKDIR /project
 # Copy dependency files
 COPY pyproject.toml .
 COPY requirements.txt .
-COPY .env .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
