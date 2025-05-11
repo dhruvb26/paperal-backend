@@ -1,7 +1,7 @@
 [project]
-name = "my-crew"
+name = "paperal-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "best paper writing assistant"
 readme = "README.md"
 authors = [
     { name = "Dhruv Bansal", email = "dk.bansal0026@gmail.com" }
@@ -17,16 +17,12 @@ dependencies = [
     "langchain[openai]>=0.3.25",
     "langgraph>=0.4.2",
     "pinecone[grpc]>=6.0.2",
-    "pypdf2>=3.0.1",
+    "pypdf2>=3.0.0",
     "redis>=5.3.0",
+    "requests>=2.31.0",
+    "setuptools>=80.4.0",
     "supabase>=2.15.1",
     "tavily-python>=0.7.2",
     "uvicorn>=0.34.2",
 ]
 
-[tool.hatch.build.targets.wheel]
-include = ["src/**/*"]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
