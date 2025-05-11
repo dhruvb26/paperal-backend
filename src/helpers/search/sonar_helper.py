@@ -14,7 +14,7 @@ def query_sonar(query: str) -> list[str]:
         "messages": [
             {
                 "role": "system",
-                "content": "You are a helpful assistant that helps with finding peer-review papers on a given topic. Only return the urls of the papers without any other text or markdown formatting."
+                "content": "You are a helpful assistant that helps with finding peer-review papers that are accesible as a pdf on a given topic. Only return the urls of the papers without any other text or markdown formatting."
             },
             {
                 "role": "user",

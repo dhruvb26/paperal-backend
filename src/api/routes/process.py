@@ -4,7 +4,7 @@ from models import ProcessRequest, ProcessResponse, APIResponse
 from http import HTTPStatus
 import logging
 from celery.result import AsyncResult
-from api.tasks.process_urls_task import process_urls_task
+from api import process_urls_task
 
 router = APIRouter()
 
@@ -32,7 +32,6 @@ async def process_papers(request: ProcessRequest):
             )
 
         task = process_urls_task.delay(request.urls)
-        
         logging.info(f"Processing {len(request.urls)} URLs in Celery task {task.id}")
 
         response = APIResponse(

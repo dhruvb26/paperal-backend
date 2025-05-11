@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from models import SearchRequest, SearchResponse, APIResponse
 from helpers import query_sonar, query_tavily, query_scholar
+from utils import process_url
 from http import HTTPStatus
 import logging
 
@@ -39,13 +40,27 @@ async def search_papers(request: SearchRequest):
                 
             tavily_query = f"academic research papers on {request.topic} filetype:pdf"
 
-            scholar_query = f"{request.topic}"
+            scholar_query = f"{request.topic} filetype:pdf"
             
             sonar_results = query_sonar(sonar_query)
             tavily_results = query_tavily(tavily_query)
-            scholar_results = query_scholar(scholar_query)
+            scholar_results = query_scholar(scholar_query, 5)
 
-            result = sonar_results["urls"] + tavily_results + scholar_results
+            processed_urls = []
+            
+            for url in sonar_results["urls"]:
+                if processed := process_url(url):
+                    processed_urls.append(processed)
+                    
+            for url in tavily_results:
+                if processed := process_url(url):
+                    processed_urls.append(processed)
+                    
+            for url in scholar_results:
+                if processed := process_url(url):
+                    processed_urls.append(processed)
+
+            result = processed_urls
 
         except Exception as e:
             logging.error(f"Error in paper search flow: {str(e)}")

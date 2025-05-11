@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import os
 import asyncio
 from utils import has_date_in_content
+from utils.text import get_pdf_page_count
 import logging
 
 load_dotenv()
@@ -72,8 +73,17 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
         Dictionary containing processed chunks and metadata
     """
     try:
+        if url.lower().endswith('.pdf'):
+            try:
+                page_count = get_pdf_page_count(url)
+                if page_count > 25:
+                    logging.info(f"Skipping PDF has {page_count} pages.")
+                    return None
+            except Exception as e:
+                logging.error(f"Error checking PDF page count for {url}: {str(e)}")
+                return None
+
         task = await chunkr.upload(url, config)
-        
         if task.output and task.output.chunks:
             chunks = task.output.chunks
             
@@ -81,7 +91,6 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
                 {
                     "_id": chunk.chunk_id,
                     "text": chunk.embed,
-                    "category": str(chunk.chunk_length)
                 }
                 for chunk in chunks
             ]
@@ -97,7 +106,7 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
             
             for chunk in chunks[:15]:
                 for segment in chunk.segments:
-                    if segment.segment_type == "PageFooter" and has_date_in_content(segment.content):
+                    if (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") and has_date_in_content(segment.content):
                         info += segment.content
                         break
 

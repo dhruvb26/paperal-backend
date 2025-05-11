@@ -140,12 +140,13 @@ async def extract_research_topic(user_query: str) -> TopicMetadata:
     """
     try:
         prompt = f"""
-                You are a research topic extraction assistant. Your task is to analyze the user's query and extract the main research topic they want to write about.
+                You are a research topic extraction assistant. Your task is to analyze the user's query and extract the main research topic they want to write about
+                that will also be the title of the research paper. Don't use conjunctions and don't use colons.
 
                 Please identify the core research topic and provide it in the following JSON format:
 
                 {{
-                    "main_topic": "The primary research topic which will also be the title of the research paper",
+                    "main_topic": "The primary research topic.",
                     "sub_topics": ["List of related sub-topics or aspects to explore"],
                     "research_question": "A well-formulated research question based on the topic"
                 }}

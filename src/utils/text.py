@@ -1,5 +1,8 @@
 import re
 import json
+import requests
+import PyPDF2
+from io import BytesIO
 from typing import Optional, Any, Dict
 from models import CitedResponse
 
@@ -43,11 +46,14 @@ def serialize_hit(hit: Any) -> Dict[str, Any]:
     Serialize a Hit object to a dictionary.
     
     Args:
-        hit: The hit object from vector search
+        hit: The hit object from vector search - can be either an object or dictionary
         
     Returns:
         Dict[str, Any]: Serialized hit as a dictionary
     """
+    if isinstance(hit, dict):
+        return hit
+    
     return {
         "_id": getattr(hit, "_id", getattr(hit, "id", None)),
         "_score": getattr(hit, "_score", getattr(hit, "score", None)),
@@ -64,8 +70,15 @@ def serialize_tool_result(tool_result: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Serialized tool result
     """
-    serializable_results = [serialize_hit(hit) for hit in tool_result.get("results", [])]
-    return {"query": tool_result.get("query"), "results": serializable_results}
+    if isinstance(tool_result.get("results", []), list):
+        results = tool_result.get("results", [])
+        serializable_results = [
+            hit if isinstance(hit, dict) else serialize_hit(hit) 
+            for hit in results
+        ]
+        return {"query": tool_result.get("query"), "results": serializable_results}
+    
+    return tool_result
 
 def format_structured_response(text: str, citation_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
@@ -88,3 +101,38 @@ def format_structured_response(text: str, citation_info: Optional[Dict[str, Any]
         ).model_dump()
     else:
         return {"text": text, "is_referenced": False, "href": None}
+
+def get_pdf_page_count(pdf_url: str) -> int:
+    """
+    Get the number of pages in a PDF from a URL.
+    
+    Args:
+        pdf_url: URL of the PDF file
+        
+    Returns:
+        int: Number of pages in the PDF
+        
+    Raises:
+        requests.RequestException: If there's an error downloading the PDF
+        PyPDF2.PdfReadError: If there's an error reading the PDF
+        ValueError: If the URL doesn't point to a valid PDF
+    """
+    try:
+        response = requests.get(pdf_url, stream=True)
+        response.raise_for_status()
+        
+        if 'application/pdf' not in response.headers.get('content-type', '').lower():
+            raise ValueError("URL does not point to a PDF file")
+            
+        pdf_file = BytesIO(response.content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        
+        return len(pdf_reader.pages)
+        
+    except requests.RequestException as e:
+        raise requests.RequestException(f"Error downloading PDF: {str(e)}")
+    except PyPDF2.PdfReadError as e:
+        raise PyPDF2.PdfReadError(f"Error reading PDF: {str(e)}")
+    finally:
+        if 'pdf_file' in locals():
+            pdf_file.close()

@@ -11,7 +11,7 @@ def query_tavily(query: str | list[str]) -> list[dict]:
     """
     tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
     
-    response = tavily_client.search(query, search_depth="advanced", chunks_per_source=3, max_results=15)
+    response = tavily_client.search(query, search_depth="advanced", chunks_per_source=3, max_results=5, include_domains=["arxiv.org"])
 
     all_results = []
 
