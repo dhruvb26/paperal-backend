@@ -14,11 +14,9 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
 
 response_model = init_chat_model("openai:gpt-4o", temperature=0.4)
 grader_model = init_chat_model("openai:gpt-4.1", temperature=0)
-
 vector_search_tool = VectorSearchTool()
 
 GRADE_PROMPT = (
@@ -50,7 +48,6 @@ def generate_question_for_rag(content: str) -> str:
         SystemMessage(content="You are an academic writing assistant that generates search queries for vector search. Given the previous 2-3 sentences from a research paper draft, generate a specific question that will help find relevant chunks of text to continue the academic writing. Only return the question itself."),
         HumanMessage(content=content)
     ]
-    
     response = response_model.invoke(messages)
     return response.content
 
@@ -72,7 +69,6 @@ def evaluate_rag_necessity(content: str) -> bool:
         Only return 'true' or 'false' without any other text."""),
         HumanMessage(content=content)
     ]
-    
     response = response_model.invoke(messages)
     result = response.content.lower().strip() == 'true'
     return result
@@ -81,7 +77,6 @@ def execute_tool_call(tool_call):
     """Execute a tool call and return its result."""
     tool_name = tool_call["function"]["name"]
     tool_args = json.loads(tool_call["function"]["arguments"])
-    
     if tool_name == "vector_search":
         result = vector_search_tool._run(**tool_args)
         return result
@@ -98,9 +93,8 @@ def retrieve_relevant_documents(state: MessagesState):
         MessagesState: Updated state with retrieved documents
     """
     content = state["messages"][0].content
-    logger.info(f"Generating RAG query for content: {content[:100]}...")
     search_query = generate_question_for_rag(content)
-    logger.info(f"Generated search query: {search_query}")
+    logging.info(f"FIRST NODE-----\n")
     
     model = response_model.bind_tools([vector_search_tool])
     initial_response = model.invoke([
@@ -109,18 +103,16 @@ def retrieve_relevant_documents(state: MessagesState):
     ])
     
     retrieved_documents = []
-    
     if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
-        logger.info("Processing tool calls from model response")
         for tool_call in initial_response.additional_kwargs['tool_calls']:
             tool_result = execute_tool_call(tool_call)
+            logging.info(f"Tool result from retrieve_relevant_documents: {tool_result}")
             if tool_result:
-                logger.info(f"Got result from tool {tool_call['function']['name']}")
                 serialized_tool_result = serialize_tool_result(tool_result)
                 retrieved_documents.append(serialized_tool_result)
         
         retrieved_context = json.dumps(retrieved_documents)
-        logger.info(f"Retrieved {len(retrieved_documents)} relevant documents")
+        logging.info(f"Formatted ToolMessage: {ToolMessage(content=retrieved_context, tool_name='vector_search', tool_call_id=initial_response.additional_kwargs['tool_calls'][0]['id'])}")
         
         return {
             "messages": state["messages"] + [
@@ -131,8 +123,7 @@ def retrieve_relevant_documents(state: MessagesState):
                 )
             ]
         }
-        
-    logger.warning("No relevant documents found from vector search")
+    
     return {
         "messages": state["messages"] + [
             ToolMessage(
@@ -156,19 +147,14 @@ def generate_response_with_rag(state: MessagesState):
     previous_sentences = state["messages"][0].content
     tool_message = state["messages"][-1]
     
-    logger.info("Generating response with RAG")
-    
     if not isinstance(tool_message, ToolMessage) or tool_message.tool_name != "vector_search":
-        logger.warning("Expected ToolMessage from vector_search, but got different message type")
         return {"messages": state["messages"] + [AIMessage(content="Error: Invalid message sequence")]}
-        
+    
     retrieved_context = tool_message.content
-
     try:
         context_data = json.loads(retrieved_context)
         citation_info = {}
         if isinstance(context_data, list) and context_data:
-            logger.info("Processing retrieved context for citation information")
             doc = context_data[0]
             results = doc.get("results", [])
             first_hit = results[0] if results else None
@@ -179,9 +165,7 @@ def generate_response_with_rag(state: MessagesState):
                     "citation": fields.get("citation"),
                     "context": fields.get("text")
                 }
-            logger.info(f"Found citation: {citation_info.get('citation')}")
     except (json.JSONDecodeError, TypeError, KeyError) as e:
-        logger.error(f"Error processing retrieved context: {str(e)}")
         citation_info = None
     
     messages = [
@@ -194,12 +178,8 @@ def generate_response_with_rag(state: MessagesState):
         HumanMessage(content=f"PREVIOUS SENTENCES: {previous_sentences}\n\nRETRIEVED DOCUMENTS:\n{retrieved_context}")
     ]
     
-    logger.info("Generating response with citation information")
     response = response_model.invoke(messages)
-    
     structured_response = format_structured_response(response.content, citation_info)
-    logger.info("Generated structured response with citations")
-    
     return {"messages": state["messages"] + [AIMessage(content=json.dumps(structured_response))]}
 
 def generate_normal_response(state: MessagesState):
@@ -213,7 +193,6 @@ def generate_normal_response(state: MessagesState):
         MessagesState: Updated state with the generated next sentence
     """
     previous_sentences = state["messages"][0].content
-    
     response = response_model.invoke([
         SystemMessage(content="""You are an academic writing assistant.
         Generate ONLY the next single sentence that continues the academic writing based on the previous sentences.
@@ -221,7 +200,6 @@ def generate_normal_response(state: MessagesState):
         Generate ONLY ONE sentence - do not write an entire paragraph or multiple sentences."""),
         HumanMessage(content=previous_sentences)
     ])
-    
     structured_response = format_structured_response(response.content)
     return {"messages": state["messages"] + [AIMessage(content=json.dumps(structured_response))]}
 
@@ -231,21 +209,16 @@ def check_relevance(
     """Determine whether the retrieved documents are relevant to the previous sentences written so far."""
     previous_sentences = state["messages"][0].content
     tool_message = state["messages"][-1]
-    
-    logger.info("Checking relevance of retrieved documents")
-    
-    if not isinstance(tool_message, ToolMessage) or tool_message.tool_name != "vector_search":
-        logger.warning("Expected ToolMessage from vector_search, but got different message type")
+ 
+    if not isinstance(tool_message, ToolMessage) or tool_message.tool_name != "vector_search":       
         return {"check_relevance": "generate_normal"}
-        
-    retrieved_context = tool_message.content
     
+    retrieved_context = tool_message.content
     if retrieved_context == "No relevant documents found.":
-        logger.info("No documents to check for relevance")
         return {"check_relevance": "generate_normal"}
 
     prompt = GRADE_PROMPT.format(question=previous_sentences, context=retrieved_context)
-    logger.info("Evaluating document relevance with grader model")
+    
     
     response = (
         grader_model
@@ -254,7 +227,7 @@ def check_relevance(
         )
     )
     score = response.binary_score
-    logger.info(f"Relevance check result: {score}")
+    
 
     if score == "yes":
         return {"check_relevance": "generate_with_rag"}
@@ -292,6 +265,7 @@ def generate_query_or_respond(state: PaperState):
         if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
             for tool_call in initial_response.additional_kwargs['tool_calls']:
                 tool_result = execute_tool_call(tool_call)
+                logging.info(f"Tool result from generate_query_or_respond: {tool_result}")
                 if tool_result:
                     serialized_tool_result = serialize_tool_result(tool_result)
                     retrieved_documents.append(serialized_tool_result)
