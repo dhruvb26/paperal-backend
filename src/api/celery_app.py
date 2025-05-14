@@ -5,6 +5,7 @@ from utils import process_urls
 from helpers import PineconeManager, SupabaseManager, extract_metadata
 import asyncio
 import logging
+from celery.utils.log import get_task_logger
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +20,8 @@ celery_app = Celery(
     backend=os.getenv('REDIS_URL'),
 )
 
+logger = get_task_logger(__name__)
+
 @celery_app.task(name='api.tasks.process_urls_task')
 def process_urls_task(urls: list[str]):
     """
@@ -28,8 +31,8 @@ def process_urls_task(urls: list[str]):
         urls: List of URLs to process
     """
     try:
-        logging.info("Starting Celery task process_urls_task")
-        result = asyncio.run(process_urls(urls))
+        logger.info("Starting Celery task process_urls_task")
+        result = asyncio.run(process_urls(urls, strategy="langchain"))
         
         pinecone_manager = PineconeManager()
         supabase_manager = SupabaseManager()
@@ -38,7 +41,6 @@ def process_urls_task(urls: list[str]):
             if item:
                 try:
                     metadata = asyncio.run(extract_metadata(item["info"]))
-
                     lib_record_metadata = {
                         "file_url": item["url"],
                         "authors": metadata["authors"],
@@ -54,21 +56,21 @@ def process_urls_task(urls: list[str]):
                         try:
                             pinecone_manager.upsert_records("library", item["vector_data"])
                         except Exception as e:
-                            logging.info(f"Error upserting records to Pinecone: {str(e)}")
+                            logger.info(f"Error upserting records to Pinecone: {str(e)}")
 
                     lib_record = {
-                        "title": item["title"],
+                        "title": metadata["title"],
                         "description": metadata["description"],
                         "metadata": lib_record_metadata
                     }
                     supabase_manager.add_to_library([lib_record])
                 except Exception as e:
-                    logging.info(f"Error processing item: {str(e)}")
+                    logger.info(f"Error processing item: {str(e)}")
         
         return {"status": "success", "processed_urls": len(urls)}
 
     except Exception as e:
-        logging.info(f"Error in Celery task process_urls_task: {str(e)}")
+        logger.info(f"Error in Celery task process_urls_task: {str(e)}")
         raise
 
 
@@ -80,4 +82,4 @@ celery_app.conf.update(
     accept_content=['json'],
     result_serializer='json',
     enable_utc=True,
-) 
+)

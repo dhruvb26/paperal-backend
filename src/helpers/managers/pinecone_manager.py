@@ -75,13 +75,17 @@ class PineconeManager:
         
         # deduplicate by _id
         deduped_hits = {hit['_id']: hit for hit in h1['result']['hits'] + h2['result']['hits']}.values()
-
         # sort by _score descending
         sorted_hits = sorted(deduped_hits, key=lambda x: x['_score'], reverse=True)
 
         result = [{'_id': hit['_id'], 'fields': hit['fields']} for hit in sorted_hits]
 
+        print("Sorted hits: \n", sorted_hits)
+        print("\n\n")
+
         reranked_results = self.rerank_results(result, query)
+
+        print("Reranked results: \n", reranked_results)
 
         return reranked_results
     

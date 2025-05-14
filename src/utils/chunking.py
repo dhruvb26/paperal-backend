@@ -12,11 +12,12 @@ import os
 import asyncio
 from utils import has_date_in_content
 from utils.text import get_pdf_page_count
+from utils.langchain_chunking import get_chunks
 import logging
 
 load_dotenv()
 
-async def process_urls(urls: list[str]):
+async def process_urls(urls: list[str], strategy: str = "chunkr"):
     """
     Process multiple document URLs concurrently using Chunkr
     
@@ -49,7 +50,7 @@ async def process_urls(urls: list[str]):
 
         tasks = []
         for url in urls:
-            task = asyncio.create_task(process_single_url(chunkr, url, chunk_config))
+            task = asyncio.create_task(process_single_url(chunkr, url, chunk_config, strategy))
             tasks.append(task)
         
         results = await asyncio.gather(*tasks)
@@ -61,7 +62,7 @@ async def process_urls(urls: list[str]):
     finally:
         await chunkr.close()
 
-async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
+async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, strategy: str):
     """
     Process a single URL and return the processed data
     
@@ -82,36 +83,45 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
             except Exception as e:
                 logging.error(f"Error checking PDF page count for {url}: {str(e)}")
                 return None
-
-        task = await chunkr.upload(url, config)
-        if task.output and task.output.chunks:
-            chunks = task.output.chunks
             
-            vector_data = [
-                {
-                    "_id": chunk.chunk_id,
-                    "text": chunk.embed,
+        if strategy == "chunkr":
+            task = await chunkr.upload(url, config)
+            if task.output and task.output.chunks:
+                chunks = task.output.chunks
+                
+                vector_data = [
+                    {
+                        "_id": chunk.chunk_id,
+                        "text": chunk.embed,
+                    }
+                    for chunk in chunks
+                ]
+
+                title = ""
+                info = ""
+                
+                for chunk in chunks[:15]:
+                    for segment in chunk.segments:
+                        if segment.segment_type == "Title":
+                            title = segment.content
+                        elif (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") or has_date_in_content(segment.content):
+                            info += segment.content
+                            break
+
+                return {
+                    "url": url,
+                    "title": title,
+                    "info": info,
+                    "vector_data": vector_data,
+                    "chunks": chunks
                 }
-                for chunk in chunks
-            ]
-
-            title = ""
-            info = ""
-            
-            for chunk in chunks[:15]:
-                for segment in chunk.segments:
-                    if segment.segment_type == "Title":
-                        title = segment.content
-                    elif (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") or has_date_in_content(segment.content):
-                        info += segment.content
-                        break
+        else:
+            info, chunks = get_chunks(url)
 
             return {
                 "url": url,
-                "title": title,
                 "info": info,
-                "vector_data": vector_data,
-                "chunks": chunks
+                "vector_data": chunks
             }
             
     except Exception as e:
