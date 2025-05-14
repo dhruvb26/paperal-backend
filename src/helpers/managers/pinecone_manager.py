@@ -79,16 +79,16 @@ class PineconeManager:
         # sort by _score descending
         sorted_hits = sorted(deduped_hits, key=lambda x: x['_score'], reverse=True)
 
-        # transform to format for reranking
         result = [{'_id': hit['_id'], 'fields': hit['fields']} for hit in sorted_hits]
 
-        # rerank the results
-        # reranked_results = self.rerank_results(result, query)
+        reranked_results = self.rerank_results(result, query)
 
-        return result
+        return reranked_results
     
 
     def rerank_results(self, merged_results: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
+        
+        original_data = {hit['_id']: hit['fields'] for hit in merged_results}
         rerank_documents = [{"id": hit['_id'], "text": hit['fields']['text']} for hit in merged_results]
     
         reranked_results = self.client.inference.rerank(
@@ -103,13 +103,13 @@ class PineconeManager:
             }
         )
 
-        print("Query", query)
-        print('-----')
-        for row in reranked_results.data:
-            print(f"{row['document']['id']} - {round(row['score'], 2)} - {row['document']['text']}")
-
-        # transform back to original format - using 'id' instead of '_id'
-        reranked_results = [{'_id': hit['document']['id'], 'fields': {'text': hit['document']['text']}} for hit in reranked_results.data]
+        reranked_results = [{
+            '_id': hit['document']['id'], 
+            'fields': {
+                'text': hit['document']['text'],
+                **{k: v for k, v in original_data[hit['document']['id']].items() if k != 'text'}
+            }
+        } for hit in reranked_results.data]
 
         return reranked_results
     
