@@ -98,15 +98,11 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration):
             title = ""
             info = ""
             
-            for chunk in chunks[:3]:
-                for segment in chunk.segments:
-                    info += segment.content
-                    if segment.segment_type == "Title":
-                        title = segment.content
-            
             for chunk in chunks[:15]:
                 for segment in chunk.segments:
-                    if (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") and has_date_in_content(segment.content):
+                    if segment.segment_type == "Title":
+                        title = segment.content
+                    elif (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") or has_date_in_content(segment.content):
                         info += segment.content
                         break
 

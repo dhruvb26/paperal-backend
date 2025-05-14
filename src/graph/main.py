@@ -28,7 +28,6 @@ GRADE_PROMPT = (
 
 def _set_env(key: str):
     if key not in os.environ:
-        logging.debug(f"Setting environment variable: {key}")
         os.environ[key] = getpass.getpass(f"{key}:")
 
 _set_env("GOOGLE_API_KEY")
@@ -94,7 +93,6 @@ def retrieve_relevant_documents(state: MessagesState):
     """
     content = state["messages"][0].content
     search_query = generate_question_for_rag(content)
-    logging.info(f"FIRST NODE-----\n")
     
     model = response_model.bind_tools([vector_search_tool])
     initial_response = model.invoke([
@@ -106,14 +104,12 @@ def retrieve_relevant_documents(state: MessagesState):
     if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
         for tool_call in initial_response.additional_kwargs['tool_calls']:
             tool_result = execute_tool_call(tool_call)
-            logging.info(f"Tool result from retrieve_relevant_documents: {tool_result}")
             if tool_result:
                 serialized_tool_result = serialize_tool_result(tool_result)
                 retrieved_documents.append(serialized_tool_result)
         
         retrieved_context = json.dumps(retrieved_documents)
-        logging.info(f"Formatted ToolMessage: {ToolMessage(content=retrieved_context, tool_name='vector_search', tool_call_id=initial_response.additional_kwargs['tool_calls'][0]['id'])}")
-        
+
         return {
             "messages": state["messages"] + [
                 ToolMessage(
@@ -173,7 +169,7 @@ def generate_response_with_rag(state: MessagesState):
         Generate ONLY the next single sentence that continues the academic writing based on the previous sentences.
         Use the information from the retrieved documents to craft a well-cited sentence.
         Your sentence should maintain the academic tone and flow naturally from the previous sentences.
-        Include a citation in the form (Author, Year) if you're using specific information from the documents.
+        Do not include a citation in the final sentence. 
         Generate ONLY ONE sentence - do not write an entire paragraph or multiple sentences."""),
         HumanMessage(content=f"PREVIOUS SENTENCES: {previous_sentences}\n\nRETRIEVED DOCUMENTS:\n{retrieved_context}")
     ]
@@ -265,7 +261,6 @@ def generate_query_or_respond(state: PaperState):
         if hasattr(initial_response, 'additional_kwargs') and 'tool_calls' in initial_response.additional_kwargs:
             for tool_call in initial_response.additional_kwargs['tool_calls']:
                 tool_result = execute_tool_call(tool_call)
-                logging.info(f"Tool result from generate_query_or_respond: {tool_result}")
                 if tool_result:
                     serialized_tool_result = serialize_tool_result(tool_result)
                     retrieved_documents.append(serialized_tool_result)

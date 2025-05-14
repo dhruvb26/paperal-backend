@@ -6,6 +6,11 @@ import logging
 from models import TopicMetadata, DocumentMetadata
 load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_MODEL = "gemini-2.0-flash"
 
