@@ -9,3 +9,15 @@ services:
       - .:/project
     env_file:
       - .env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
