@@ -4,13 +4,13 @@ This is supposed to help setup the backend API infrastructure for the [Paperal](
 
 The frontend code and the old backend code can be found at the [other repository.](https://github.com/dhruvb26/paperal)
 
-To setup the project, it is recommended to have [`uv`](https://github.com/astral-sh/uv) installed as the Python package and project manager. [`homebrew`](https://brew.sh/) can be used to install `uv` like:
+To setup the project, it is recommended to have [`uv`](https://github.com/astral-sh/uv) installed as the Python package and project manager. [`homebrew`](https://brew.sh/) can be used to install `uv`
 
 ```
 brew install uv
 ```
 
-Clone this repository and navigate to it:
+Clone this repository and navigate to it
 
 ```
 git clone https://github.com/dhruvb26/paperal-backend.git
@@ -20,10 +20,24 @@ cd paperal-backend
 
 Once the package manager is installed, we can go ahead and install the other project dependencies which can be found in two places: the [pyproject.toml](pyproject.toml) file or the [requirements.txt](requirements.txt) file.
 
-Use the command below in the root folder to install the dependencies:
+Use the command below in the root folder to install the dependencies
 
 ```
 uv sync
+```
+
+Let's install Redis locally if you don't already have it. It is required for the backend store and queue implemented by [Celery](https://docs.celeryq.dev/)
+
+```
+brew install redis
+```
+
+Then run it locally
+
+```bash
+redis-server
+
+redis-cli ping # will return PONG if running
 ```
 
 ## environment
@@ -38,7 +52,7 @@ This repo is responsible for all things backend. The high-level API is implement
 
 - `/search` - The topic received from the endpoint above is passed to this to initiate a web search for all relevant PDFs on the web.
 
-- `/process` - Once the URLs from search are returned, a [Celery](https://docs.celeryq.dev/) task is initiated through this endpoint with all those URLs.
+- `/process` - Once the URLs from search are returned, a Celery task is initiated through this endpoint with all those URLs.
 
 - `/generate` - Given user's previously written content, gives the suggestion.
 
