@@ -29,6 +29,11 @@ def process_urls_task(urls: list[str]):
     
     Args:
         urls: List of URLs to process
+    Returns:
+        Dict containing:
+        - status: Overall task status
+        - processed_urls: Number of URLs processed
+        - results: Detailed success/failure info for each URL
     """
     try:
         logger.info("Starting Celery task process_urls_task")
@@ -37,41 +42,101 @@ def process_urls_task(urls: list[str]):
         pinecone_manager = PineconeManager()
         supabase_manager = SupabaseManager()
 
+        results_tracking = {
+            "total": len(urls),
+            "successful": [],
+            "failed": []
+        }
+
         for item in result:
             if item:
                 try:
+                    url = item["url"]
+                    url_result = {"url": url, "supabase_success": False, "pinecone_success": False, "error": None}
+                    
                     metadata = asyncio.run(extract_metadata(item["info"]))
+                    if not metadata["year"] or not metadata["title"] or not metadata["description"] or not metadata["authors"]:
+                        results_tracking["failed"].append({
+                            "url": url,
+                            "supabase_success": False,
+                            "pinecone_success": False,
+                            "error": "No meaningful metadata found"
+                        })
+                        continue
+
                     lib_record_metadata = {
-                        "file_url": item["url"],
+                        "file_url": url,
                         "authors": metadata["authors"],
                         "year": metadata["year"],
                         "citations": metadata["citations"]
                     }
-
-                    if "vector_data" in item:
-                        for vector in item["vector_data"]:
-                            vector["file_url"] = item["url"]
-                            vector["citation"] = metadata["citations"].get("in_text", "")
-                        
-                        try:
-                            pinecone_manager.upsert_records("library", item["vector_data"])
-                        except Exception as e:
-                            logger.info(f"Error upserting records to Pinecone: {str(e)}")
 
                     lib_record = {
                         "title": metadata["title"],
                         "description": metadata["description"],
                         "metadata": lib_record_metadata
                     }
-                    supabase_manager.add_to_library([lib_record])
+                    
+                    supabase_result = supabase_manager.add_to_library([lib_record])
+                    url_result["supabase_success"] = bool(supabase_result.get("added"))
+                
+                    if supabase_result.get("added") and "vector_data" in item:
+                        
+                        supabase_record_id = supabase_result["added"][0].get("id")
+                        
+                        for vector in item["vector_data"]:
+                            vector["file_url"] = url
+                            vector["citation"] = metadata["citations"].get("in_text", "")
+                            vector["library_id"] = supabase_record_id
+                        
+                        try:
+                            pinecone_manager.upsert_records("library", item["vector_data"])
+                            url_result["pinecone_success"] = True
+                        except Exception as e:
+                            error_msg = f"Error upserting records to Pinecone: {str(e)}"
+                            logger.error(error_msg)
+                            url_result["error"] = error_msg
+                            
+                    if url_result["supabase_success"] and url_result["pinecone_success"]:
+                        results_tracking["successful"].append(url_result)
+                    else:
+                        results_tracking["failed"].append(url_result)
+                            
                 except Exception as e:
-                    logger.info(f"Error processing item: {str(e)}")
+                    error_msg = f"Error processing item: {str(e)}"
+                    logger.error(error_msg)
+                    results_tracking["failed"].append({
+                        "url": item["url"],
+                        "supabase_success": False,
+                        "pinecone_success": False,
+                        "error": error_msg
+                    })
+            else:
+                results_tracking["failed"].append({
+                    "url": "Unknown URL",
+                    "supabase_success": False,
+                    "pinecone_success": False,
+                    "error": "Failed to process URL"
+                })
         
-        return {"status": "success", "processed_urls": len(urls)}
+        return {
+            "status": "success",
+            "processed_urls": len(urls),
+            "results": results_tracking
+        }
 
     except Exception as e:
-        logger.info(f"Error in Celery task process_urls_task: {str(e)}")
-        raise
+        error_msg = f"Error in Celery task process_urls_task: {str(e)}"
+        logger.error(error_msg)
+        return {
+            "status": "error",
+            "error": error_msg,
+            "results": {
+                "total": len(urls),
+                "successful": [],
+                "failed": [{"url": url, "error": error_msg} for url in urls]
+            }
+        }
 
 
 celery_app.conf.timezone = 'UTC'

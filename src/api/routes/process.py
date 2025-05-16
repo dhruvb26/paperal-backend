@@ -66,7 +66,10 @@ async def get_task_status(task_id: str):
         task_id: The ID of the task to check
         
     Returns:
-        The current status and result of the task if available
+        The current status and result of the task if available, including:
+        - Overall task status
+        - Number of URLs processed
+        - Detailed success/failure information for each URL
     """
     try:
         task_result = AsyncResult(task_id)
@@ -81,14 +84,35 @@ async def get_task_status(task_id: str):
                 content=response.model_dump()
             )
             
-        response = APIResponse(
-            success=True,
-            data={
-                "task_id": task_id,
-                "status": task_result.status,
-                "result": task_result.result if task_result.ready() else None
-            }
-        )
+        result = task_result.result if task_result.ready() else None
+        if result:
+            success = result.get("status") == "success"
+            error = result.get("error")
+            
+            response = APIResponse(
+                success=success,
+                error=error,
+                data={
+                    "task_id": task_id,
+                    "status": task_result.status,
+                    "processed_urls": result.get("processed_urls", 0),
+                    "results": result.get("results", {
+                        "total": 0,
+                        "successful": [],
+                        "failed": []
+                    })
+                }
+            )
+        else:
+            response = APIResponse(
+                success=True,
+                data={
+                    "task_id": task_id,
+                    "status": task_result.status,
+                    "result": None
+                }
+            )
+            
         return JSONResponse(
             status_code=HTTPStatus.OK,
             content=response.model_dump()

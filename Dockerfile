@@ -1,31 +1,24 @@
 FROM python:3.13.3-slim
 
-# Set working directory
 WORKDIR /project
 
-# Copy dependency files
 COPY pyproject.toml .
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
 
-# Create a non-root user
+RUN pip install --no-cache-dir --use-deprecated=legacy-resolver -r requirements.txt
+
 RUN useradd -m -u 1000 appuser
 
-# Copy the rest of the application
 COPY src/ ./src/
 
-# Set proper permissions
 RUN chown -R appuser:appuser /project
 
-# Expose the port the app runs on
 EXPOSE 8000
 
 WORKDIR /project/src
 
-# Switch to non-root user
 USER appuser
 
-# Command to run the application
 CMD ["python", "run.py"]

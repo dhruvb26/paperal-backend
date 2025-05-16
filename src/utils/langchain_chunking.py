@@ -1,6 +1,5 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_community.document_loaders.parsers import RapidOCRBlobParser
 import tiktoken
 import uuid
 import re
@@ -34,9 +33,7 @@ def get_chunks(file_path: str):
         length_function=get_token_length,
     )
 
-    loader = PyMuPDFLoader(file_path, mode="page",images_inner_format="markdown-img",
-        images_parser=RapidOCRBlobParser(),
-        extract_tables="markdown")
+    loader = PyMuPDFLoader(file_path, mode="page",extract_tables="markdown")
 
     docs = loader.load()
 

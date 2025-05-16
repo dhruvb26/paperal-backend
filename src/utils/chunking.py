@@ -74,15 +74,15 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, st
         Dictionary containing processed chunks and metadata
     """
     try:
-        if url.lower().endswith('.pdf'):
-            try:
-                page_count = get_pdf_page_count(url)
-                if page_count > 25:
-                    logging.info(f"Skipping PDF has {page_count} pages.")
-                    return None
-            except Exception as e:
-                logging.error(f"Error checking PDF page count for {url}: {str(e)}")
-                return None
+        # if url.lower().endswith('.pdf'):
+        #     try:
+        #         page_count = get_pdf_page_count(url)
+        #         if page_count > 25:
+        #             logging.info(f"Skipping PDF has {page_count} pages.")
+        #             return None
+        #     except Exception as e:
+        #         logging.error(f"Error checking PDF page count for {url}: {str(e)}")
+        #         return None
             
         if strategy == "chunkr":
             task = await chunkr.upload(url, config)

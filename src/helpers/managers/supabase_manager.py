@@ -59,15 +59,36 @@ class SupabaseManager:
             logging.error(f"Error querying library with filters {metadata_filters}: {e}")
             raise
 
-    def add_to_library(self, records: List[Dict]) -> None:
+    def add_to_library(self, records: List[Dict]) -> Dict[str, List[Dict]]:
         """
-        Add multiple records to the library table.
+        Add multiple records to the library table, skipping any that have matching titles.
         
         Args:
             records (List[Dict]): List of dictionaries containing record data to insert
+            
+        Returns:
+            Dict[str, List[Dict]]: Dictionary containing lists of added and skipped records
         """
         try:
-            self.client.table("library").insert(records).execute()
+            added_records = []
+            skipped_records = []
+            
+            for record in records:
+                existing = self.client.table("library") \
+                    .select("*") \
+                    .eq("title", record["title"]) \
+                    .execute()
+                
+                if not existing.data:
+                    result = self.client.table("library").insert(record).execute()
+                    added_records.append(result.data[0])
+                else:
+                    skipped_records.append(record)
+            
+            return {
+                "added": added_records,
+                "skipped": skipped_records
+            }
         except Exception as e:
             logging.error(f"Error adding records to library: {e}")
             raise
