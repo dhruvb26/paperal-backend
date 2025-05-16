@@ -42,7 +42,7 @@ redis-cli ping # will return PONG if running
 
 ## environment
 
-There is an example environment variable file that you should copy as `.env` and populate with the variables.
+There is an example environment variable file that you should copy as `.env` and populate with the variables. For the `REDIS_URL`, if using [Docker](https://www.docker.com/) the default will be `redis://redis:6379/0` but if running Redis locally it will be `redis://localhost:6379`.
 
 ## structure
 
@@ -76,12 +76,12 @@ The `src` folder at the root is home to all these packages that are made up of s
 
 There is a top-level [run.py](src/run.py) file that launches both the FastAPI and Celery app in parallel. This is also the file run by Docker finally.
 
-**NOTE:** Celery has some issues picking up the right env variables, so it is recommended to pass in the file explicitly when running locally. Also, make sure to launch both services from the `src` folder.
+**NOTE:** Make sure to launch both services from the `src` folder.
 
 Celery
 
 ```
-UV_ENV_FILE=../.env celery -A api.celery_app:celery_app worker --loglevel=info
+celery -A api.celery_app:celery_app worker --loglevel=info
 ```
 
 FastAPI
@@ -92,11 +92,11 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
 
 ## deployment
 
-The application itself is Dockerized and hosted through [Render](https://render.com/) that takes care of pushing the image to a registry and pulling it to finally set it up.
+The application itself is dockerized and hosted through [Render](https://render.com/) that takes care of pushing the image to a registry and pulling it to finally set it up.
 
-The Dockerfile and the docker compose can be edited if any changes are made in the future.
+The dockerfile and the docker compose can be edited if any changes are made in the future.
 
-After cloning the repository, the following command will spin up the containers locally if you have the Docker engine running:
+After cloning the repository, the following command will spin up the containers locally if you have the Docker engine running
 
 ```
 docker compose up -d
