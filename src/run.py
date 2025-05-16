@@ -6,7 +6,7 @@ def run_uvicorn():
 
 def run_celery():
     """Run the Celery worker."""
-    return ["celery", "-A", "api.celery_app:celery_app", "worker", "--pool=solo", "--loglevel=info"]
+    return ["celery", "-A", "api.celery_app:celery_app", "worker", "--pool=threads", "--loglevel=info"]
 
 if __name__ == "__main__":
     uvicorn_process = subprocess.Popen(run_uvicorn())

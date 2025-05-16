@@ -169,7 +169,7 @@ def generate_response_with_rag(state: MessagesState):
         Generate ONLY the next single sentence that continues the academic writing based on the previous sentences.
         Use the information from the retrieved documents to craft a well-cited sentence.
         Your sentence should maintain the academic tone and flow naturally from the previous sentences.
-        Do not include a citation in the final sentence. 
+        Do not include any form of citation in the final sentence. 
         Generate ONLY ONE sentence - do not write an entire paragraph or multiple sentences."""),
         HumanMessage(content=f"PREVIOUS SENTENCES: {previous_sentences}\n\nRETRIEVED DOCUMENTS:\n{retrieved_context}")
     ]
