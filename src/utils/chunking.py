@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import os
 import asyncio
 from utils import has_date_in_content
-from utils.text import get_pdf_page_count
+# from utils.text import get_pdf_page_count
 from utils.langchain_chunking import get_chunks
 import logging
 

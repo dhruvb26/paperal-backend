@@ -1,7 +1,6 @@
 import re
 import json
 import requests
-import PyPDF2
 from io import BytesIO
 from typing import Optional, Any, Dict
 from models import CitedResponse
@@ -102,7 +101,7 @@ def format_structured_response(text: str, citation_info: Optional[Dict[str, Any]
     else:
         return {"text": text, "is_referenced": False, "href": None}
 
-def get_pdf_page_count(pdf_url: str) -> int:
+# def get_pdf_page_count(pdf_url: str) -> int:
     """
     Get the number of pages in a PDF from a URL.
     
