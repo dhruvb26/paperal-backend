@@ -80,12 +80,7 @@ class PineconeManager:
 
         result = [{'_id': hit['_id'], 'fields': hit['fields']} for hit in sorted_hits]
 
-        print("Sorted hits: \n", sorted_hits)
-        print("\n\n")
-
         reranked_results = self.rerank_results(result, query)
-
-        print("Reranked results: \n", reranked_results)
 
         return reranked_results
     
