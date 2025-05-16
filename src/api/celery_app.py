@@ -80,22 +80,21 @@ def process_urls_task(urls: list[str]):
                     supabase_result = supabase_manager.add_to_library([lib_record])
                     url_result["supabase_success"] = bool(supabase_result.get("added"))
                 
-                    if "vector_data" in item:
-                        supabase_record_id = supabase_result["added"][0].get("id")
-                        
-                        for vector in item["vector_data"]:
-                            vector["file_url"] = url
-                            vector["citation"] = metadata["citations"].get("in_text", "")
-                            vector["library_id"] = supabase_record_id
-                        
-                        try:
-                            pinecone_manager.upsert_records("library", item["vector_data"])
-                            url_result["pinecone_success"] = True
-                            logger.info(f"Pinecone records upserted successfully.")
-                        except Exception as e:
-                            error_msg = f"Error upserting records to Pinecone: {str(e)}"
-                            logger.error(error_msg)
-                            url_result["error"] = error_msg
+                    supabase_record_id = supabase_result["added"][0].get("id")
+                    
+                    for vector in item["vector_data"]:
+                        vector["file_url"] = url
+                        vector["citation"] = metadata["citations"].get("in_text", "")
+                        vector["library_id"] = supabase_record_id
+                    
+                    try:
+                        pinecone_manager.upsert_records("library", item["vector_data"])
+                        url_result["pinecone_success"] = True
+                        logger.info(f"Pinecone records upserted successfully.")
+                    except Exception as e:
+                        error_msg = f"Error upserting records to Pinecone: {str(e)}"
+                        logger.error(error_msg)
+                        url_result["error"] = error_msg
                             
                     if url_result["supabase_success"] and url_result["pinecone_success"]:
                         results_tracking["successful"].append(url_result)

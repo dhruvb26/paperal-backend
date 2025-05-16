@@ -76,9 +76,8 @@ class SupabaseManager:
             for record in records:
                 existing = self.client.table("library") \
                     .select("*") \
-                    .eq("title", record["title"]) \
+                    .eq("title", record["title"].replace("\n", "").strip()) \
                     .execute()
-                
                 if not existing.data:
                     result = self.client.table("library").insert(record).execute()
                     added_records.append(result.data[0])
