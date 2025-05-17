@@ -101,3 +101,11 @@ After cloning the repository, the following command will spin up the containers 
 ```
 docker compose up -d
 ```
+
+## logic
+
+Here is the nodes in the graph that are responsible for suggesting sentences to the user from the `/generate` endpoint.
+
+![Agent Graph](src/sample/graph.png)
+
+A vector search tool is implemented [vector_search.py](src/graph/vector_search.py) that uses [pinecone_manager.py](src/helpers/managers/pinecone_manager.py) to query the vector database.
