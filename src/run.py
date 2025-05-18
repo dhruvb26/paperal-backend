@@ -2,7 +2,7 @@ import subprocess
 
 def run_uvicorn():
     """Run the FastAPI app using uvicorn."""
-    return ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    return ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 def run_celery():
     """Run the Celery worker."""
