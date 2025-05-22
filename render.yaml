@@ -40,7 +40,7 @@ services:
     region: virginia
     runtime: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "cd src && uvicorn api.main:app"
+    startCommand: "cd src && uvicorn api.main:app --host 0.0.0.0 --port $PORT"
     autoDeploy: false
     envVars:
       - key: MISTRAL_API_KEY
