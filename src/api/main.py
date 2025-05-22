@@ -6,7 +6,7 @@ from api.routes.search import router as search_router
 from api.routes.process import router as process_router
 from api.routes.generate import router as generate_router
 load_dotenv()
-
+port = load_dotenv.getenv("PORT")
 app = FastAPI(
     title="Paperal",
     description="This is the FastAPI backend for Paperal",
@@ -33,4 +33,4 @@ app.include_router(process_router, tags=["process"])
 app.include_router(generate_router, tags=["generate"])
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, port=8000)
+    uvicorn.run(app, port=port)

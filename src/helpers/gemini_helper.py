@@ -50,7 +50,7 @@ async def make_gemini_call(prompt: str, model_name: str = DEFAULT_MODEL) -> str:
     Returns:
         Response text from Gemini
     """
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = load_dotenv.getenv("GOOGLE_API_KEY")
     url = f"{GEMINI_API_ENDPOINT}/{model_name}:generateContent?key={api_key}"
     
     payload = {
