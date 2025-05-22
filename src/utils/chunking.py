@@ -24,12 +24,12 @@ load_dotenv()
 
 async def process_urls(urls: list[str], strategy: str = "chunkr"):
     """
-    Process multiple document URLs concurrently using Chunkr
+    Process multiple document URLs one at a time using Chunkr
     
     Args:
         urls: List of URLs to process
     Returns:
-        List of processed data for each URL
+        Async generator yielding processed data for each URL as it completes
     """
     try:
         logging.info(f"Starting to process {len(urls)} URLs using strategy: {strategy}")
@@ -54,20 +54,14 @@ async def process_urls(urls: list[str], strategy: str = "chunkr"):
             ),
         )
 
-        tasks = []
         for url in urls:
-            task = asyncio.create_task(process_single_url(chunkr, url, chunk_config, strategy))
-            tasks.append(task)
-        
-        logging.info("Created processing tasks for all URLs, awaiting results")
-        results = await asyncio.gather(*tasks)
-        successful_results = [r for r in results if r is not None]
-        logging.info(f"Completed processing. Successfully processed {len(successful_results)} out of {len(urls)} URLs")
-        return successful_results
+            result = await process_single_url(chunkr, url, chunk_config, strategy)
+            if result is not None:
+                yield result
+            logging.info(f"Completed processing URL: {url}")
 
     except Exception as e:
         logging.error(f"Error processing URLs: {str(e)}", exc_info=True)
-        return []
     finally:
         await chunkr.close()
         logging.info("Closed Chunkr client")

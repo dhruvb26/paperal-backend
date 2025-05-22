@@ -43,8 +43,8 @@ async def search_papers(request: SearchRequest):
             scholar_query = f"{request.topic} filetype:pdf"
             
             sonar_results = query_sonar(sonar_query)
-            tavily_results = query_tavily(tavily_query, 15)
-            scholar_results = query_scholar(scholar_query, 10)
+            tavily_results = query_tavily(tavily_query, 5)
+            scholar_results = query_scholar(scholar_query, 5)
 
             processed_urls = []
             
