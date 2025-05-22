@@ -1,12 +1,13 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes.topic import router as topic_router
 from api.routes.search import router as search_router
 from api.routes.process import router as process_router
 from api.routes.generate import router as generate_router
 load_dotenv()
-port = load_dotenv.getenv("PORT")
+port = os.getenv("PORT")
 app = FastAPI(
     title="Paperal",
     description="This is the FastAPI backend for Paperal",
