@@ -34,4 +34,5 @@ app.include_router(process_router, tags=["process"])
 app.include_router(generate_router, tags=["generate"])
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, port=port)
+    uvicorn.run(app, host="0.0.0.0", port=int(port))
+
