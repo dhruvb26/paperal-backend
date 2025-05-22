@@ -5,7 +5,7 @@ services:
     runtime: python
     buildCommand: "pip install --no-cache-dir --use-deprecated=legacy-resolver -r requirements.txt"
     startCommand: "cd src && celery -A api.celery_app:celery_app worker --pool=threads --loglevel=info"
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: MISTRAL_API_KEY
         sync: false
@@ -41,7 +41,7 @@ services:
     runtime: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "cd src && uvicorn api.main:app --host 0.0.0.0 --port $PORT"
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: MISTRAL_API_KEY
         sync: false
