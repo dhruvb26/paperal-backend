@@ -15,6 +15,11 @@ from utils import has_date_in_content
 from utils.langchain_chunking import get_chunks
 import logging
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 load_dotenv()
 
 async def process_urls(urls: list[str], strategy: str = "chunkr"):
@@ -27,6 +32,7 @@ async def process_urls(urls: list[str], strategy: str = "chunkr"):
         List of processed data for each URL
     """
     try:
+        logging.info(f"Starting to process {len(urls)} URLs using strategy: {strategy}")
         chunkr = Chunkr(api_key=os.getenv("CHUNKR_API_KEY"))
         
         chunk_config = Configuration(
@@ -53,14 +59,18 @@ async def process_urls(urls: list[str], strategy: str = "chunkr"):
             task = asyncio.create_task(process_single_url(chunkr, url, chunk_config, strategy))
             tasks.append(task)
         
+        logging.info("Created processing tasks for all URLs, awaiting results")
         results = await asyncio.gather(*tasks)
-        return [r for r in results if r is not None]
+        successful_results = [r for r in results if r is not None]
+        logging.info(f"Completed processing. Successfully processed {len(successful_results)} out of {len(urls)} URLs")
+        return successful_results
 
     except Exception as e:
-        logging.error(f"Error processing URLs: {str(e)}")
+        logging.error(f"Error processing URLs: {str(e)}", exc_info=True)
         return []
     finally:
         await chunkr.close()
+        logging.info("Closed Chunkr client")
 
 async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, strategy: str):
     """
@@ -74,20 +84,14 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, st
         Dictionary containing processed chunks and metadata
     """
     try:
-        # if url.lower().endswith('.pdf'):
-        #     try:
-        #         page_count = get_pdf_page_count(url)
-        #         if page_count > 25:
-        #             logging.info(f"Skipping PDF has {page_count} pages.")
-        #             return None
-        #     except Exception as e:
-        #         logging.error(f"Error checking PDF page count for {url}: {str(e)}")
-        #         return None
+        logging.info(f"Processing URL: {url}")
             
         if strategy == "chunkr":
+            logging.info(f"Using Chunkr strategy for {url}")
             task = await chunkr.upload(url, config)
             if task.output and task.output.chunks:
                 chunks = task.output.chunks
+                logging.info(f"Successfully extracted {len(chunks)} chunks from {url}")
                 
                 vector_data = [
                     {
@@ -104,10 +108,12 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, st
                     for segment in chunk.segments:
                         if segment.segment_type == "Title":
                             title = segment.content
+                            logging.info(f"Found title: {title}")
                         elif (segment.segment_type == "PageFooter" or segment.segment_type == "PageHeader") or has_date_in_content(segment.content):
                             info += segment.content
                             break
 
+                logging.info(f"Completed processing {url} with Chunkr strategy")
                 return {
                     "url": url,
                     "title": title,
@@ -116,7 +122,9 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, st
                     "chunks": chunks
                 }
         else:
+            logging.info(f"Using alternative chunking strategy for {url}")
             info, chunks = get_chunks(url)
+            logging.info(f"Successfully processed {url} with alternative strategy")
 
             return {
                 "url": url,
@@ -125,5 +133,5 @@ async def process_single_url(chunkr: Chunkr, url: str, config: Configuration, st
             }
             
     except Exception as e:
-        logging.error(f"Error processing URL {url}: {str(e)}")
+        logging.error(f"Error processing URL {url}: {str(e)}", exc_info=True)
         return None

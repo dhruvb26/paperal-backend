@@ -1,4 +1,3 @@
-import getpass
 import os
 import logging
 from typing import Literal
@@ -29,7 +28,7 @@ GRADE_PROMPT = (
 
 def _set_env(key: str):
     if key not in os.environ:
-        os.environ[key] = getpass.getpass(f"{key}:")
+        raise ValueError(f"{key} environment variable is not set")
 
 _set_env("GOOGLE_API_KEY")
 _set_env("OPENAI_API_KEY")

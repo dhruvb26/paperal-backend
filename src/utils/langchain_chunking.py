@@ -2,15 +2,15 @@ import os
 import uuid
 import json
 import tiktoken
-from getpass import getpass
 from langchain_openai import ChatOpenAI
 from utils.text import clean_split_text
 from langchain_text_splitters import TokenTextSplitter
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders.parsers.images import LLMImageBlobParser
 
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = getpass("OpenAI API key =")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
 
 def get_token_length(text: str) -> int:
     """Get the length of text in tokens using the same encoding as the splitter."""
