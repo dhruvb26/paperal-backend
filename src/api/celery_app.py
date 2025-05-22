@@ -17,7 +17,7 @@ celery_app = Celery(
 logger = get_task_logger(__name__)
 
 @celery_app.task(name='api.tasks.process_urls_task')
-def process_urls_task(urls: list[str]):
+def celery_process_urls_task(urls: list[str]):
     """
     Celery task to process URLs in the background, handling each URL as it completes
     

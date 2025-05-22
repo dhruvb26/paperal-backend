@@ -4,7 +4,7 @@ from models import ProcessRequest, ProcessResponse, APIResponse
 from http import HTTPStatus
 import logging
 from celery.result import AsyncResult
-from api import process_urls_task
+from api.hatchet_task import process_urls_task, UrlInput
 
 router = APIRouter()
 
@@ -31,14 +31,14 @@ async def process_papers(request: ProcessRequest):
                 content=response.model_dump()
             )
 
-        task = process_urls_task.delay(request.urls)
-        logging.info(f"Processing {len(request.urls)} URLs in Celery task {task.id}")
+        process_urls_task.run_no_wait(input=UrlInput(urls=request.urls))
+        logging.info(f"Processing {len(request.urls)} URLs in Hatchet.")
 
         response = APIResponse(
             success=True,
             data={
                 "message": "Processing started in background",
-                "task_id": task.id
+                "task_id": "hatchet_task_id"
             }
         )
         return JSONResponse(

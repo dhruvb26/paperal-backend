@@ -150,8 +150,3 @@ async def process_urls_task(input: UrlInput, ctx: Context) -> Dict[str, Any]:
             }
         }
 
-
-if __name__ == "__main__":
-    process_urls_task.run(
-        input=UrlInput(urls=["https://arxiv.org/pdf/1512.03385"]),
-    )

@@ -10,7 +10,7 @@ def run_celery():
 
 if __name__ == "__main__":
     uvicorn_process = subprocess.Popen(run_uvicorn())
-    celery_process = subprocess.Popen(run_celery())
+    # celery_process = subprocess.Popen(run_celery())
 
     uvicorn_process.wait()
-    celery_process.wait()
+    # celery_process.wait()
