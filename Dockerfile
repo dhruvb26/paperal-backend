@@ -1,5 +1,5 @@
 FROM python:3.13.3-slim
-
+ 
 WORKDIR /project
 
 COPY pyproject.toml .
@@ -20,4 +20,4 @@ WORKDIR /project/src
 
 USER appuser
 
-CMD ["python", "run.py"]
+CMD ["python", "run_worker.py"]
