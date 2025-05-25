@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from models import ProcessRequest, ProcessResponse, APIResponse
 from http import HTTPStatus
 import logging
-from celery.result import AsyncResult
 from api.hatchet_task import process_urls_task, UrlInput
 
 router = APIRouter()
@@ -57,8 +56,6 @@ async def process_papers(request: ProcessRequest):
             content=response.model_dump()
         )
 
-@router.get("/status/{task_id}", response_model=APIResponse)
-async def get_task_status(task_id: str):
     """
     Get the status of a background processing task
     
