@@ -11,7 +11,7 @@ router = APIRouter()
 async def process_papers(request: ProcessRequest):
     """
     Process a research paper by chunking it into sections and storing the vector embeddings.
-    This is a background task handled by Celery that returns immediately after queueing the processing.
+    This is a background task handled by Hatchet that returns immediately after queueing the processing.
     
     Args:
         request: Object containing a list of URLs to process
