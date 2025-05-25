@@ -1,20 +1,16 @@
-from hatchet_sdk import Context, Hatchet, ClientConfig
+from hatchet_sdk import Context, Hatchet, TaskDefaults
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from dotenv import load_dotenv
-import os
 from utils import process_urls
 from helpers import PineconeManager, SupabaseManager, extract_metadata
-import asyncio
 import logging
-
+from time import timedelta
 load_dotenv()
-
-# Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize Hatchet with config
 hatchet = Hatchet(debug=True)
+timeout_wf = hatchet.workflow(name="TimeoutWorkflow", task_defaults=TaskDefaults(execution_timeout=timedelta(minutes=3)))
 
 class UrlInput(BaseModel):
     urls: List[str]
@@ -30,6 +26,7 @@ class TaskResult(BaseModel):
     processed_urls: int
     results: Dict[str, Any]
 
+@timeout_wf.task(execution_timeout=timedelta(minutes=3))
 @hatchet.task(name="ProcessUrlsTask", input_validator=UrlInput)
 async def process_urls_task(input: UrlInput, ctx: Context) -> Dict[str, Any]:
     """

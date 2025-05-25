@@ -386,6 +386,15 @@ wheels = [
 ]
 
 [[package]]
+name = "eval-type-backport"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/ea/8b0ac4469d4c347c6a385ff09dc3c048c2d021696664e26c7ee6791631b5/eval_type_backport-0.2.2.tar.gz", hash = "sha256:f0576b4cf01ebb5bd358d02314d31846af5e07678387486e2c798af0e7d849c1", size = 9079, upload_time = "2024-12-21T20:09:46.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/31/55cd413eaccd39125368be33c46de24a1f639f2e12349b0361b4678f3915/eval_type_backport-0.2.2-py3-none-any.whl", hash = "sha256:cb6ad7c393517f476f96d456d0412ea80f0a8cf96f6892834cd9340149111b0a", size = 5830, upload_time = "2024-12-21T20:09:44.175Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1029,6 +1038,22 @@ wheels = [
 ]
 
 [[package]]
+name = "mistralai"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "eval-type-backport" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1d/34/b819d228f4df173c1bfd42936c2c749f41a13ae0796d03cd55f955426842/mistralai-1.7.1.tar.gz", hash = "sha256:a0cd4632c8aad6d8b90f77713c4049185626ac9b2a0d82484407beef1a9d16f3", size = 142373, upload_time = "2025-05-22T15:08:18.247Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/ea/bc40e3c8cf6ac5672eae503601b1f8b766085a9cf07c2e45de4b0481c91f/mistralai-1.7.1-py3-none-any.whl", hash = "sha256:2ca97f9c2adac9509578e8b141a1875bee1d966a8dde4d90ffc05f1b904b0421", size = 302285, upload_time = "2025-05-22T15:08:16.718Z" },
+]
+
+[[package]]
 name = "multidict"
 version = "6.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1233,6 +1258,7 @@ dependencies = [
     { name = "langchain-neo4j" },
     { name = "langchain-text-splitters" },
     { name = "langgraph" },
+    { name = "mistralai" },
     { name = "neo4j" },
     { name = "openai" },
     { name = "pinecone", extra = ["grpc"] },
@@ -1264,6 +1290,7 @@ requires-dist = [
     { name = "langchain-neo4j", specifier = ">=0.4.0" },
     { name = "langchain-text-splitters", specifier = ">=0.3.8" },
     { name = "langgraph", specifier = ">=0.4.2" },
+    { name = "mistralai", specifier = ">=1.7.1" },
     { name = "neo4j", specifier = ">=5.28.1" },
     { name = "openai", specifier = ">=1.78.0" },
     { name = "pinecone", extras = ["grpc"], specifier = ">=6.0.2" },
