@@ -26,20 +26,6 @@ Use the command below in the root folder to install the dependencies
 uv sync
 ```
 
-Let's install Redis locally if you don't already have it. It is required for the backend store and queue implemented by [Celery](https://docs.celeryq.dev/)
-
-```
-brew install redis
-```
-
-Then run it locally
-
-```bash
-redis-server
-
-redis-cli ping # will return PONG if running
-```
-
 ## environment
 
 There is an example environment variable file that you should copy as `.env` and populate with the variables. For the `REDIS_URL`, if using [Docker](https://www.docker.com/) the default will be `redis://redis:6379/0` but if running Redis locally it will be `redis://localhost:6379`.
@@ -52,7 +38,7 @@ This repo is responsible for all things backend. The high-level API is implement
 
 - `/search` - The topic received from the endpoint above is passed to this to initiate a web search for all relevant PDFs on the web.
 
-- `/process` - Once the URLs from search are returned, a Celery task is initiated through this endpoint with all those URLs.
+- `/process` - Once the URLs from search are returned, a Hatchet task is initiated through this endpoint with all those URLs.
 
 - `/generate` - Given user's previously written content, gives the suggestion.
 
@@ -60,7 +46,7 @@ These four endpoints depend on lots of other packages that are defined in the re
 
 The `src` folder at the root is home to all these packages that are made up of smaller modules:
 
-1. `api` - Home to the Celery application and the FastAPI application with a package `routes` that defines the endpoints.
+1. `api` - Home to the Hatchet task and the FastAPI application with a package `routes` that defines the endpoints.
 
 2. `graph` - Responsible for the flow that is initiated when a request hits the `/generate` endpoint.
 
@@ -74,15 +60,9 @@ The `src` folder at the root is home to all these packages that are made up of s
 
 6. `sample` - Sample JSON data for chunks.
 
-There is a top-level [run.py](src/run.py) file that launches both the FastAPI and Celery app in parallel. This is also the file run by Docker finally.
+There is a top-level [run.py](src/run.py) file that launches the FastAPI app. This is also the file run by Docker finally.
 
-**NOTE:** Make sure to launch both services from the `src` folder.
-
-Celery
-
-```
-celery -A api.celery_app:celery_app worker --loglevel=info
-```
+**NOTE:** Make sure to launch services from the `src` folder.
 
 FastAPI
 
