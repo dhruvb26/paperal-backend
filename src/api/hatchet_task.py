@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from utils import process_urls
 from helpers import PineconeManager, SupabaseManager, extract_metadata
 import logging
-from time import timedelta
+from datetime import timedelta
 load_dotenv()
 logger = logging.getLogger(__name__)
 
