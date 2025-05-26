@@ -23,3 +23,7 @@ class ProcessRequest(BaseModel):
 
 class GraphQueryRequest(BaseModel):
     query: str
+
+class AdaptRequest(BaseModel):
+    writing_samples: str
+    text_to_adapt: str
