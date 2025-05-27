@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: paperal-api
+    region: virginia
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "cd src && uvicorn api.main:app --host 0.0.0.0 --port $PORT"
+    autoDeploy: true
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: CHUNKR_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: LANGSMITH_TRACING
+        sync: false
+      - key: LANGSMITH_ENDPOINT
+        sync: false
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: LANGSMITH_PROJECT
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PORT
+        sync: false
+      - key: HATCHET_CLIENT_TOKEN
+        sync: false
+      - key: HATCHET_ENV
+        sync: false
+      - key: PYTHON_BUFFERED
+        sync: false

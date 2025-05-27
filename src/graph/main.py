@@ -1,4 +1,3 @@
-import getpass
 import os
 import logging
 from typing import Literal
@@ -9,13 +8,14 @@ from graph.vector_search import VectorSearchTool
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from utils import serialize_tool_result, format_structured_response
 from models import PaperState, GradeDocuments
+from IPython.display import Image, display
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-response_model = init_chat_model("openai:gpt-4o", temperature=0.4)
+response_model = init_chat_model("openai:gpt-4o-mini", temperature=0.7)
 grader_model = init_chat_model("openai:gpt-4.1", temperature=0)
 vector_search_tool = VectorSearchTool()
 
@@ -28,7 +28,7 @@ GRADE_PROMPT = (
 
 def _set_env(key: str):
     if key not in os.environ:
-        os.environ[key] = getpass.getpass(f"{key}:")
+        raise ValueError(f"{key} environment variable is not set")
 
 _set_env("GOOGLE_API_KEY")
 _set_env("OPENAI_API_KEY")
@@ -285,7 +285,7 @@ def generate_query_or_respond(state: PaperState):
     
     return {"messages": [response]}
 
-async def build_rag_graph():
+async def build_rag_graph(save_graph: bool = False):
     """
     Build the RAG workflow graph with relevance checking
     
@@ -314,6 +314,10 @@ async def build_rag_graph():
     workflow.set_entry_point("retrieve_documents")
     
     graph = workflow.compile()
+
+    if save_graph:
+        with open("sample/graph.png", "wb") as f:
+            f.write(graph.get_graph().draw_mermaid_png())
 
     return graph
 

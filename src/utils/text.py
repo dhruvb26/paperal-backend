@@ -1,7 +1,10 @@
 import re
 import json
+import regex  
 import requests
+import unicodedata
 from io import BytesIO
+from unidecode import unidecode
 from typing import Optional, Any, Dict
 from models import CitedResponse
 
@@ -100,6 +103,84 @@ def format_structured_response(text: str, citation_info: Optional[Dict[str, Any]
         ).model_dump()
     else:
         return {"text": text, "is_referenced": False, "href": None}
+    
+def clean_split_text(text: str, preserve_unicode: bool = False) -> str:
+    """
+    Clean and split text by removing special characters and normalizing whitespace.
+
+    Args:
+        text: The text to clean and split
+        
+    Returns:
+        str: Cleaned and split text
+    """
+    if not text:
+        return ""
+        
+    text = unicodedata.normalize('NFKC', text)
+    
+    char_mappings = {
+        # Quotes
+        '"': '"',  # U+201C LEFT DOUBLE QUOTATION MARK
+        '"': '"',  # U+201D RIGHT DOUBLE QUOTATION MARK
+        ''': "'",  # U+2018 LEFT SINGLE QUOTATION MARK
+        ''': "'",  # U+2019 RIGHT SINGLE QUOTATION MARK
+        '‚': ',',  # U+201A SINGLE LOW-9 QUOTATION MARK
+        '„': '"',  # U+201E DOUBLE LOW-9 QUOTATION MARK
+        
+        # Dashes and Hyphens
+        '—': '-',  # U+2014 EM DASH
+        '–': '-',  # U+2013 EN DASH
+        '‐': '-',  # U+2010 HYPHEN
+        '‑': '-',  # U+2011 NON-BREAKING HYPHEN
+        '−': '-',  # U+2212 MINUS SIGN
+        
+        # Spaces and Breaks
+        '\u00A0': ' ',  # NO-BREAK SPACE
+        '\u2000': ' ',  # EN QUAD
+        '\u2001': ' ',  # EM QUAD
+        '\u2002': ' ',  # EN SPACE
+        '\u2003': ' ',  # EM SPACE
+        '\u2004': ' ',  # THREE-PER-EM SPACE
+        '\u2005': ' ',  # FOUR-PER-EM SPACE
+        '\u2006': ' ',  # SIX-PER-EM SPACE
+        '\u2007': ' ',  # FIGURE SPACE
+        '\u2008': ' ',  # PUNCTUATION SPACE
+        '\u2009': ' ',  # THIN SPACE
+        '\u200A': ' ',  # HAIR SPACE
+        '\u200B': '',   # ZERO WIDTH SPACE
+        '\u200C': '',   # ZERO WIDTH NON-JOINER
+        '\u200D': '',   # ZERO WIDTH JOINER
+        '\u2028': ' ',  # LINE SEPARATOR
+        '\u2029': ' ',  # PARAGRAPH SEPARATOR
+        
+        # Other Special Characters
+        '…': '...',  # U+2026 HORIZONTAL ELLIPSIS
+        '•': '*',    # U+2022 BULLET
+        '·': '*',    # U+00B7 MIDDLE DOT
+        '‹': '<',    # U+2039 SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+        '›': '>',    # U+203A SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+        '«': '<<',   # U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+        '»': '>>',   # U+00BB RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+        '™': '(TM)', # U+2122 TRADE MARK SIGN
+        '®': '(R)',  # U+00AE REGISTERED SIGN
+        '©': '(C)',  # U+00A9 COPYRIGHT SIGN
+    }
+    
+    for old, new in char_mappings.items():
+        text = text.replace(old, new)
+    
+    if not preserve_unicode:
+        text = unidecode(text)
+    
+    text = regex.sub(r'\r\n|\r|\n', ' ', text)
+    text = regex.sub(r'\s+', ' ', text)
+    text = ''.join(char for char in text if unicodedata.category(char)[0] != 'C' or char in ('\n', '\t'))
+    
+    if not preserve_unicode:
+        text = regex.sub(r'[\p{S}]', '', text)
+    
+    return text.strip()
 
 # def get_pdf_page_count(pdf_url: str) -> int:
     """
