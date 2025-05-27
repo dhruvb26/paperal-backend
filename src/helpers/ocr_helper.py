@@ -214,6 +214,8 @@ def extract_citations_with_context(pdf_url: str):
     Returns:
         dict: Dictionary containing page numbers as keys and their citations with context as values
     """
+    api_key = os.getenv("MISTRAL_API_KEY")
+    client = Mistral(api_key=api_key)
     ocr_response = client.ocr.process(
         model="mistral-ocr-latest",
         document={

@@ -8,6 +8,7 @@ from api.routes.process import router as process_router
 from api.routes.generate import router as generate_router
 from api.routes.introduction import router as introduction_router
 from api.routes.adapt import router as adapt_router
+from api.routes.ocr import router as ocr_router
 load_dotenv()
 port = os.getenv("PORT")
 app = FastAPI(
@@ -36,6 +37,7 @@ app.include_router(process_router, tags=["process"])
 app.include_router(generate_router, tags=["generate"])
 app.include_router(introduction_router, tags=["introduction"])
 app.include_router(adapt_router, tags=["adapt"])
+app.include_router(ocr_router, tags=["ocr"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(port))

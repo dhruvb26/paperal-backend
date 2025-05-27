@@ -1596,7 +1596,7 @@ dependencies = [
 requires-dist = [
     { name = "bs4", specifier = ">=0.0.2" },
     { name = "chunkr-ai", specifier = ">=0.0.49" },
-    { name = "dspy", specifier = ">=2.6.24" },
+    { name = "dspy", specifier = ">=2.6.14" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "hatchet-sdk", specifier = ">=1.10.2" },
     { name = "httpx", extras = ["http2"], specifier = ">=0.28.1" },

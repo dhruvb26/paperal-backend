@@ -27,3 +27,6 @@ class GraphQueryRequest(BaseModel):
 class AdaptRequest(BaseModel):
     writing_samples: str
     text_to_adapt: str
+
+class OCRRequest(BaseModel):
+    url: str

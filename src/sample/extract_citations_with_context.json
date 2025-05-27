@@ -1,0 +1,240 @@
+{
+  "1": [
+    {
+      "paragraph": "Many foundation models (Bommasani et al., 2021) such as GPT-4 (OpenAI, 2023), Gemini (Gemini Team, 2023) and DALL-E (Ramesh et al., 2021) are trained on unknown data. There is great interest in methods that can determine if a piece of data was used to train these models. Such methodscalled membership inference attacks (Shokri et al., 2017)\u2014have been studied for foundation models in many recent works (Shi et al., 2023; Duan et al., 2024; Ko et al., 2023; Dubi\u0144ski et al., 2024; Zhang et al., 2024a; Meeus et al., 2023). Applications include privacy attacks (Carlini et al., 2021), demonstrating the use of copyrighted material (Meeus et al., 2024b), detecting test data contamination (Oren et al., 2023), or auditing the efficacy of methods to \"unlearn\" training data (Bourtoule et al., 2021).",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Bommasani et al., 2021)",
+        "(OpenAI, 2023)",
+        "(Gemini Team, 2023)",
+        "(Ramesh et al., 2021)",
+        "(Shokri et al., 2017)",
+        "(Shi et al., 2023; Duan et al., 2024; Ko et al., 2023; Dubi\u0144ski et al., 2024; Zhang et al., 2024a; Meeus et al., 2023)",
+        "(Carlini et al., 2021)",
+        "(Oren et al., 2023)",
+        "(Bourtoule et al., 2021)"
+      ]
+    },
+    {
+      "paragraph": "Unfortunately, we show these strategies are severely flawed, and create easily distinguishable member and non-member distributions. As a special case of this flaw, concurrent works of Duan et al. (2024), Maini et al. (2024) and Meeus et al. (2024a) find a temporal shift between members and nonmembers in the Wiki-MIA dataset (Shi et al., 2023). We show this issue is persistent by identifying significant distribution shifts (beyond temporal shifts) in 8 MI evaluation datasets for foundation models, for both text and vision. Worse, we show that existing MI attacks perform \"worse than chance\" on these datasets. Specifically, we design \"blind\" attacks, which completely ignore the target model, and outperform all reported results from state-of-the-art MI attacks (see Table 1).",
+      "numbered_citations": [],
+      "author_year_citations": ["(Shi et al., 2023)"]
+    }
+  ],
+  "2": [
+    {
+      "paragraph": "Current MI attacks for foundation models thus cannot be relied on, as we cannot rule out that they are (poorly) inferring membership based on data features, without extracting any actual membership leakage from the model. In addition, studies that rely on the MI evaluations on these datasets, also cannot be trusted. For example, the authors of (Panaitescu-Liess et al., 2024) investigate the effect of watermarking on MI attacks and evaluate it on datasets that we show to have clear distribution shifts. Future MI attacks should be evaluated on models with a clear train-test split, e.g., using the Pile (Gao et al., 2020) or a random subset of DataComp (Gadre et al., 2024) or DataComp-LM (Li et al., 2024).",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Panaitescu-Liess et al., 2024)",
+        "(Gao et al., 2020)",
+        "(Gadre et al., 2024)",
+        "(Li et al., 2024)"
+      ]
+    },
+    {
+      "paragraph": "Web-scale training datasets. Foundation models are often trained on massive datasets collected from web crawls, such as C4 (Raffel et al., 2020), the Pile (Gao et al., 2020) or LAION (Schuhmann et al., 2022). However, there has been a trend towards using undisclosed training sets for models like GPT-2 to GPT-4 (Radford et al., 2019; OpenAI, 2023), Gemini (Gemini Team, 2023) or DALL-E (Ramesh et al., 2021). Even recent open models like LLaMA (Touvron et al., 2023) do not release information about their training dataset. Some datasets have been released for research purposes, such as RedPajama (Together, 2023), Dolma (Soldaini et al., 2024) or LAION (Schuhmann et al., 2022). Notably, these datasets lack a designated test set.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Raffel et al., 2020)",
+        "(Gao et al., 2020)",
+        "(Schuhmann et al., 2022)",
+        "(Radford et al., 2019; OpenAI, 2023)",
+        "(Gemini Team, 2023)",
+        "(Ramesh et al., 2021)",
+        "(Touvron et al., 2023)",
+        "(Together, 2023)",
+        "(Soldaini et al., 2024)",
+        "(Schuhmann et al., 2022)"
+      ]
+    },
+    {
+      "paragraph": "Membership inference attacks. Membership inference attacks aim to determine whether a given data point was used to train a machine learning model (Shokri et al., 2017). Early attacks applied a global decision function to all samples (e.g., by thresholding the model's loss (Yeom et al., 2018)). Current state-of-the-art attacks calibrate the attack threshold to the difficulty of each sample (Carlini et al., 2022).",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Shokri et al., 2017)",
+        "(e.g., by thresholding the model's loss (Yeom et al., 2018)",
+        "(Carlini et al., 2022)"
+      ]
+    },
+    {
+      "paragraph": "Membership inference for foundation models. Membership inference attacks have been applied to LLMs (Shi et al., 2023; Duan et al., 2024; Zhang et al., 2024a; Meeus et al., 2023), diffusion models (Dubi\u0144ski et al., 2024), CLIP (Ko et al., 2023), and other foundation models. The motivations for these attacks include using them as a component of a privacy attack (Carlini et al., 2021), for evaluating unlearning methods (Shi et al., 2023), or to detect the use of copyrighted data (Meeus et al., 2024b). Due to the lack of a dedicated test set (and possibly even an unknown training set) for the targeted models, many of these works design custom evaluation datasets for membership inference attacks, by collecting sources of data that were likely used (respectively not used) for training.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Shi et al., 2023; Duan et al., 2024; Zhang et al., 2024a; Meeus et al., 2023)",
+        "(Dubi\u0144ski et al., 2024)",
+        "(Ko et al., 2023)",
+        "(Carlini et al., 2021)",
+        "(Shi et al., 2023)"
+      ]
+    },
+    {
+      "paragraph": "Evaluating membership inference. Membership inference attacks were originally evaluated with average-case metrics such as the ROC AUC on a balanced set of members and non-members (Shokri et al., 2017). More recent work advocates for evaluating the attack's performance in the worst-case, typically by reporting the true-positive rate (TPR) at low false-positive rates (FPR) (Carlini et al., 2022).",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Shokri et al., 2017)",
+        "(Carlini et al., 2022)"
+      ]
+    }
+  ],
+  "3": [
+    {
+      "paragraph": "cases where the attacker has a non-uniform prior (Jayaraman et al., 2020). In either case, the goal of an MI attack is to extract information from the model to beat a baseline inference that does not have access to the model.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Jayaraman et al., 2020)"]
+    },
+    {
+      "paragraph": "Many MI evaluation datasets for foundation models introduce distribution shifts between members and non-members, which allows for baseline attacks with non-trivial success. In concurrent work, Duan et al. (2024) and Maini et al. (2024) identify a temporal shift between members and nonmembers in one dataset-WikiMIA (Shi et al., 2023)\u2014and demonstrate that some attacks fail when temporal shifts are removed. Our work shows that this issue is much broader: virtually all evaluation sets proposed for membership inference on foundation models are flawed. We further show that existing attacks do not just exploit distribution shifts, but they do so sub-optimally and are easily beaten by blind baselines. These attacks thus perform \"worse than chance\".",
+      "numbered_citations": [],
+      "author_year_citations": ["(Shi et al., 2023)"]
+    },
+    {
+      "paragraph": "Biases in data replication. Even if we know how the training set was sampled, building an indistinguishable dataset of non-members is challenging (Recht et al., 2019). Slight variations in the procedures used to create the two datasets (Engstrom et al., 2020) could be exploited by a blind attack.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Recht et al., 2019)",
+        "(Engstrom et al., 2020)"
+      ]
+    }
+  ],
+  "4": [
+    {
+      "paragraph": "|  |  | AUC ROC | (Shi et al., 2023) | 88.0 | Bag of Words 91.4 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Shi et al., 2023)"]
+    },
+    {
+      "paragraph": "|  |  | AUC ROC | (Duan et al., 2024) | 79.6 | Greedy 79.9 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Duan et al., 2024)"]
+    },
+    {
+      "paragraph": "|  |  | AUC ROC | (Duan et al., 2024) | 74.5 | Bag of Words 75.3 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Duan et al., 2024)"]
+    },
+    {
+      "paragraph": "| 4.1.4 | Arxiv <br> (all vs 1 mo ) | TPR@1%FPR | (Meeus et al., 2023) | 5.9 | Date Detection 10.6 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Meeus et al., 2023)"]
+    },
+    {
+      "paragraph": "|  |  | AUC ROC | (Meeus et al., 2023) | 67.8 | Date Detection 72.3 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Meeus et al., 2023)"]
+    },
+    {
+      "paragraph": "| 4.2.1 | LAION-MI | TPR@1%FPR | (Dubi\u0144ski et al., 2024) | 2.5 | Greedy 8.9 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Dubi\u0144ski et al., 2024)"]
+    },
+    {
+      "paragraph": "| 4.2.2 | Gutenberg | TPR@1%FPR | (Meeus et al., 2023) | 18.8 | Greedy 55.1 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Meeus et al., 2023)"]
+    },
+    {
+      "paragraph": "|  |  | AUC ROC | (Meeus et al., 2023) | 85.6 | Bag of Words 96.1 |",
+      "numbered_citations": [],
+      "author_year_citations": ["(Meeus et al., 2023)"]
+    },
+    {
+      "paragraph": "We now study 8 membership inference datasets proposed for large language models and diffusion models. Table 2 summarizes our results: for each dataset, we create blind attacks that outperform the best existing MI attacks that have access to a trained model. We average the results from multiple runs and report for the same metric used in prior work, either AUC ROC or TPR at low FPR. Whenever possible, we use the exact datasets released by the authors to ensure that no biases are introduced. For datasets that are not publicly available (arXiv-1 month and Gutenberg (Meeus et al., 2023)), we follow the specific collection steps outlined in the respective work to create similar datasets.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(arXiv-1 month and Gutenberg (Meeus et al., 2023)"
+      ]
+    }
+  ],
+  "5": [
+    {
+      "paragraph": "The dataset and evaluation. The WIKIMIA dataset (Shi et al., 2023) selects members from Wikipedia event pages from before 01/01/2017 and non-members from after 01/01/2023. It thus serves as an MI evaluation set for any LLM trained in between those dates. The best reported prior MI attack on this evaluation set is from the Min-K\\%++ method of Zhang et al. (2024a).",
+      "numbered_citations": [],
+      "author_year_citations": ["(Shi et al., 2023)"]
+    },
+    {
+      "paragraph": "The dataset and evaluation. This dataset (Shi et al., 2023) is constructed from 512-token length text snippets from various books. Members are selected from books in the Books3 corpus that have been shown to be memorized by GPT-3. Non-members are taken from books that were first published in or after 2023. In the evaluation of Shi et al. (2023), their Min-K\\% method obtains the highest AUC against GPT-3.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Shi et al., 2023)"]
+    },
+    {
+      "paragraph": "(Duarte et al., 2024) extended this dataset to propose the BookTection dataset. Based on their construction, we expected this dataset to suffer from the same drawbacks as BookMIA and thus do not include it in our study.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Duarte et al., 2024)"]
+    },
+    {
+      "paragraph": "The datasets and evaluations. Duan et al. (2024) hypothesize that some MI attacks evaluated on Wiki-MIA may inadvertently exploit temporal shifts between members and non-members. To showcase this, they create datasets that sample members from the Wikipedia and arXiv snippets in the Pile (Gao et al., 2020) and non-members from the same sources at a later date. ${ }^{2}$",
+      "numbered_citations": [],
+      "author_year_citations": ["(Gao et al., 2020)"]
+    },
+    {
+      "paragraph": "${ }^{2}$ (Duarte et al., 2024) propose a similar ArxivTection dataset constructed using the same temporal principle.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Duarte et al., 2024)"]
+    }
+  ],
+  "6": [
+    {
+      "paragraph": "The dataset and evaluation. Meeus et al. (2023) also note that naively re-collecting data from arXiv causes a large temporal shift. Instead, they thus pick the non-members as close after the model's cutoff date as possible. They build an MI evaluation set by taking all arXiv articles from the RedPajama dataset (Together, 2023) as members, and all articles from March 2023 (right after the dataset's cutoff date) as non-members. In contrast to the Temporal arXiv dataset we looked at previously, this dataset uses full arXiv articles rather than just snippets. The authors propose a new MI attack that relies on textual feature extractors, and evaluate it on the OpenLLaMA model (Geng \\& Liu, 2023) which was trained on RedPajama.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Together, 2023)", "(Geng \\& Liu, 2023)"]
+    },
+    {
+      "paragraph": "Our attack. As this dataset is not public, we replicate a similar setup by taking all articles before March 2023 in RedPajama as the members, and all articles from March 2023 as the non-members. The issue with this dataset is that the distributions of members and non-members are still incredibly easy to distinguish at one end: papers that are much older than the cutoff date are guaranteed to be members. And since this dataset uses the full LaTex body of each article, determining a paper's approximate date is very easy: we just look at the paper's citations. We use a regex to find all \\cite commands, and extract the year in the citation keyword if it exists. We guess that a paper is a member if it only cites papers from before 2022. This trivial baseline yields $10.6 \\%$ TPR without any false positives, over twice as high as the TPR at $1 \\%$ FPR obtained by the best MI attack in (Meeus et al., 2023).",
+      "numbered_citations": [],
+      "author_year_citations": ["(Meeus et al., 2023)"]
+    },
+    {
+      "paragraph": "The dataset and evaluation. In concurrent work, Meeus et al. (2024a) also note the issue of a temporal shift in their previous dataset we discussed above. To remedy this, they build a new MI evaluation set where the non-members are still arXiv articles from March 2023, but the members are now limited to articles from February 2023 (i.e., right before the cutoff date of the RedPajama dataset (Together, 2023)). Unfortunately, this dataset is hence suitable for evaluating MI attacks on a very narrow subset of data. The hope is that this aggressive filtering can remove the temporal shift altogether. And indeed, existing MI attacks fare poorly on this split of members and non-members: the authors show that their best MI attack achieves a TPR of $2.5 \\%$ at an FPR of $1 \\%$.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(i.e., right before the cutoff date of the RedPajama dataset (Together, 2023)"
+      ]
+    },
+    {
+      "paragraph": "The dataset. Dubi\u0144ski et al. (2024) explicitly try to control for and minimize biases in data replication. However, their techniques still leave distinguishable tails. To create an evaluation dataset for a model trained on LAION (Schuhmann et al., 2022), they rely on the multilingual-LAION dataset (Schuhmann et al., 2022) to sample non-members. This dataset was sampled from the Web in a similar way to LAION, except that the captions are not in English and the images were not filtered for quality.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Schuhmann et al., 2022)",
+        "(Schuhmann et al., 2022)"
+      ]
+    }
+  ],
+  "7": [
+    {
+      "paragraph": "The dataset and evaluation. This dataset (Meeus et al., 2023) consists of books from Project Gutenberg. The members are books contained in the RedPajama dataset (Together, 2023), more specifically the set of \"PG-19\" books collected by Rae et al. (2019) which were all originally published before 1919. The non-members consist of books added to the Project Gutenberg repository after the creation of the PG-19 corpus in February 2019. To mitigate the obvious distribution shift in the publication years of members and non-members, Meeus et al. (2023) filter both the members and non-members to only contain books published between 1850 and 1910 (i.e., members are books published between 1850 and 1910, which were added to Project Gutenberg before February 2019. Non-members are books that were originally published in the same period, but added to Project Gutenberg after February 2019). The authors evaluate a new MI attack (see Section 4.1.4 for details) against the OpenLLaMA model (Geng \\& Liu, 2023) trained on RedPajama.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Meeus et al., 2023)",
+        "(Together, 2023)",
+        "(Geng \\& Liu, 2023)"
+      ]
+    }
+  ],
+  "8": [
+    {
+      "paragraph": "Table 4: Models trained on datasets with random train-test splits for DataComp (Gadre et al., 2024) and DataComp-LM (Li et al., 2024). For each dataset pool, we report the pool\u2019s absolute size (in image-text pairs, respectively tokens) and its relative size compared to the global pool that it was randomly sampled from. Gadre et al. (2024) and Li et al. (2024) have pretrained ViTs and LLMs on each pool size.",
+      "numbered_citations": [],
+      "author_year_citations": ["(Gadre et al., 2024)", "(Li et al., 2024)"]
+    },
+    {
+      "paragraph": "An alternative avenue is to forego MI evaluations on arbitrary foundation models, and focus on those models for which identically distributed sets of members and non-members are available. A prime example is the Pile (Gao et al., 2020), which has an official test set. Models trained on the Pile training set\u2014e.g., Pythia (Biderman et al., 2023) or GPT-NeoX-20B (Black et al., 2022)\u2014are thus a popular target for MI attack evaluations (see e.g., (Duan et al., 2024; Maini et al., 2024; Li et al., 2023)). Unfortunately, the Pile only contains text, and is too small to train state-of-the-art language models.",
+      "numbered_citations": [],
+      "author_year_citations": [
+        "(Gao et al., 2020)",
+        "(Biderman et al., 2023)",
+        "(Black et al., 2022)",
+        "(see e.g., (Duan et al., 2024; Maini et al., 2024; Li et al., 2023)"
+      ]
+    },
+    {
+      "paragraph": "A more recent and broadly applicable alternative is to use models trained on the DataComp (Gadre et al., 2024) and DataComp-LM (Li et al., 2024) benchmarks. These benchmarks contribute multiple models (ViTs and LLMs) trained on data sampled randomly from a larger dataset. More precisely, these benchmarks introduce two datasets, CommonPool and DCLM-POOL, which contain respectively 12.8 billion image-text pairs and 240 trillion text tokens sampled from Common Crawl. To enable experiments at smaller budgets, the authors produce smaller data pools sampled randomly from the full pool. They then train a variety of models on each pool (see Table 4). ${ }^{4,5}$",
+      "numbered_citations": [],
+      "author_year_citations": ["(Gadre et al., 2024)", "(Li et al., 2024)"]
+    }
+  ],
+  "9": [],
+  "10": [],
+  "11": [],
+  "12": []
+}
