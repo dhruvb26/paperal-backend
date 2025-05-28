@@ -1,0 +1,11 @@
+[
+  {
+    "origin_node": [
+      {
+        "id": "1f03b64b-b66c-67b6-b8f9-010203040506",
+        "label": "Origin",
+        "content": "<p>Large language models exhibit harmful social biases [1, 6, 8, 11, 15, 24, 29, 50, 62] that can sometimes get worse for larger models [2, 18, 20, 43, 55]. At the same time, scaling model size can increase model performance on a wide array of tasks [12, 25, 59]. Here, we combine these two observations to formulate a simple hypothesis: larger models may have the capability to morally self-correct-to avoid producing harmful outputs-if instructed to do so. Our hypothesis is not entirely new (see \u00a72 for related work, especially [51, 64]) but we believe our experiments and results are. We find that the capacity for moral self- correction emerges at 22B model parameters, and that we can steer sufficiently large models to avoid harmful outputs simply by instructing models to avoid harmful outputs.</p>"
+      }
+    ]
+  }
+]
