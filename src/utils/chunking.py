@@ -22,7 +22,7 @@ logging.basicConfig(
 
 load_dotenv()
 
-async def process_urls(urls: list[str], strategy: str = "chunkr"):
+async def process_urls(urls: list[str], strategy: str = "chunkr", citation_obj: str = None):
     """
     Process multiple document URLs one at a time using Chunkr
     
@@ -51,6 +51,9 @@ async def process_urls(urls: list[str], strategy: str = "chunkr"):
                     embed_sources=[EmbedSource.LLM, EmbedSource.MARKDOWN],
                     extended_context=True,
                 ),
+                Text=GenerationConfig(
+                    llm=f"Map the text to the citation order from this object {citation_obj}, return a list of citation orders that appear in the text. If none appear, return an empty list",
+                )
             ),
         )
 

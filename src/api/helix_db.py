@@ -25,7 +25,6 @@ class DropAllNodes(Query):
     def __init__(self):
         super().__init__()
     def query(self):
-        return [{}]
+        return []
     def response(self, response):
         return response
-
