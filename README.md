@@ -1,4 +1,4 @@
-# paperal backend
+# Paperal's Backend
 
 This is supposed to help setup the backend API infrastructure for the [Paperal](https://paperal.com/) application.
 
@@ -26,11 +26,11 @@ Use the command below in the root folder to install the dependencies
 uv sync
 ```
 
-## environment
+## Environment
 
 There is an example environment variable file that you should copy as `.env` and populate with the variables. For the `REDIS_URL`, if using [Docker](https://www.docker.com/) the default will be `redis://redis:6379/0` but if running Redis locally it will be `redis://localhost:6379`.
 
-## structure
+## Structure
 
 This repo is responsible for all things backend. The high-level API is implemented through [FastAPI](https://fastapi.tiangolo.com/). There are four main endpoints:
 
@@ -70,7 +70,7 @@ FastAPI
 uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
 ```
 
-## deployment
+## Deployment
 
 The application itself is dockerized and hosted through [Render](https://render.com/) that takes care of pushing the image to a registry and pulling it to finally set it up.
 
@@ -82,7 +82,7 @@ After cloning the repository, the following command will spin up the containers 
 docker compose up -d
 ```
 
-## logic
+## Logic
 
 Here are the nodes in the graph that are responsible for suggesting sentences to the user from the `/generate` endpoint.
 
