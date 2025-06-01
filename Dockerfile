@@ -20,4 +20,4 @@ WORKDIR /project/src
 
 USER appuser
 
-CMD ["python", "run_worker.py"]
+CMD ["python", "run.py"]
