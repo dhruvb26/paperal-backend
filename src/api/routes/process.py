@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from models import ProcessRequest, ProcessResponse, APIResponse
 from http import HTTPStatus
 import logging
-from api.hatchet_task import process_urls_task, UrlInput
 
 router = APIRouter()
 
@@ -11,7 +10,6 @@ router = APIRouter()
 async def process_papers(request: ProcessRequest):
     """
     Process a research paper by chunking it into sections and storing the vector embeddings.
-    This is a background task handled by Hatchet that returns immediately after queueing the processing.
     
     Args:
         request: Object containing a list of URLs to process
@@ -30,14 +28,13 @@ async def process_papers(request: ProcessRequest):
                 content=response.model_dump()
             )
 
-        process_urls_task.run_no_wait(input=UrlInput(urls=request.urls))
-        logging.info(f"Processing {len(request.urls)} URLs in Hatchet.")
+    
+        logging.info(f"Processing {len(request.urls)} URLs.")
 
         response = APIResponse(
             success=True,
             data={
                 "message": "Processing started in background",
-                "task_id": "hatchet_task_id"
             }
         )
         return JSONResponse(

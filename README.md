@@ -38,7 +38,7 @@ This repo is responsible for all things backend. The high-level API is implement
 
 - `/search` - The topic received from the endpoint above is passed to this to initiate a web search for all relevant PDFs on the web.
 
-- `/process` - Once the URLs from search are returned, a Hatchet task is initiated through this endpoint with all those URLs.
+- `/process` - Once the URLs from search are returned, a task is initiated through this endpoint with all those URLs.
 
 - `/generate` - Given user's previously written content, gives the suggestion.
 
@@ -46,7 +46,7 @@ These four endpoints depend on lots of other packages that are defined in the re
 
 The `src` folder at the root is home to all these packages that are made up of smaller modules:
 
-1. `api` - Home to the Hatchet task and the FastAPI application with a package `routes` that defines the endpoints.
+1. `api` - Home to the FastAPI application with a package `routes` that defines the endpoints.
 
 2. `graph` - Responsible for the flow that is initiated when a request hits the `/generate` endpoint.
 

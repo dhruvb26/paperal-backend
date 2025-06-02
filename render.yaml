@@ -39,9 +39,5 @@ services:
         sync: false
       - key: PORT
         sync: false
-      - key: HATCHET_CLIENT_TOKEN
-        sync: false
-      - key: HATCHET_ENV
-        sync: false
       - key: PYTHON_BUFFERED
         sync: false
