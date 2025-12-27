@@ -4,15 +4,17 @@ from dotenv import load_dotenv
 from utils import parse_json_safely
 import logging
 from models import TopicMetadata, DocumentMetadata
+
 load_dotenv()
 
+logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
 GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-2.5-flash"
 
 def read_prompt(prompt_file: str, **kwargs) -> str:
     """
